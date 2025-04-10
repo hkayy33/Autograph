@@ -4,10 +4,12 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class Encryptor:
-    def __init__(self):
-        # Generate a random key for encryption
-        self.key = Fernet.generate_key()
+    def __init__(self, key):
+        self.key = key.encode()  # Ensure the key is in bytes
         self.cipher_suite = Fernet(self.key)
+    
+    def get_key(self):
+        return self.key.decode()  # Return the key as a string
     
     def encrypt(self, text: str) -> str:
         """
