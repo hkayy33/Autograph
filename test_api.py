@@ -1,8 +1,14 @@
 import pytest
 import requests
 import json
+from flask_sqlalchemy import SQLAlchemy
 
 BASE_URL = 'http://localhost:5002'
+
+db = SQLAlchemy()
+
+def init_db(app):
+    db.init_app(app)
 
 def test_encrypt_endpoint():
     # Test data

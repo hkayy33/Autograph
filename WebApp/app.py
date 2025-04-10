@@ -1,8 +1,13 @@
 from flask import Flask, request, jsonify
 from .encryption import Encryptor
+from WebApp.models import db
+from WebApp import create_app
 
-app = Flask(__name__)
+app = create_app()
 encryptor = Encryptor()
+
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def home():
