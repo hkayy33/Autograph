@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Autographs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Saved Autographs</h1>
+    
+    <a href="{{ url_for('generate_code') }}" class="btn btn-primary mb-4">Generate New Code</a>
+    
+    {% if autographs %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Instagram URL</th>
+                        <th>Encrypted Code</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for autograph in autographs %}
+                    <tr>
+                        <td><a href="{{ autograph.instagram_url }}" target="_blank">{{ autograph.instagram_url }}</a></td>
+                        <td>{{ autograph.encrypted_code }}</td>
+                        <td>{{ autograph.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No autographs found. <a href="{{ url_for('generate_code') }}">Generate your first code</a>.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

@@ -1,20 +1,77 @@
 {% extends "base.html" %}
 
-{% block title %}Generate Code{% endblock %}
+{% block title %}Generate Autograph{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h2>Generate Code</h2>
-    <form action="{{ url_for('generate_code') }}" method="POST">
+<div class="generate-container">
+    <h1>Generate Autograph</h1>
+    <form id="autographForm" action="{{ url_for('generate_autograph') }}" method="POST">
         <div class="form-group">
-            <label for="instagram_url">Instagram URL:</label>
-            <input type="text" class="form-control" id="instagram_url" name="instagram_url" required>
+            <label for="instagram_url">Paste post URL:</label>
+            <input type="text" class="form-control" id="instagramUrl" name="instagram_url" required>
         </div>
-        <div class="form-group">
-            <label for="raw_code">Raw Code:</label>
-            <input type="text" class="form-control" id="raw_code" name="raw_code" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Generate</button>
+        <button type="submit" class="btn btn-primary">Generate Autographed Caption</button>
     </form>
+    <div class="info-box">
+        <p>The "Autographed" caption contains a secret invisible code at the end of the caption, which is used as an authentication identifier.</p>
+    </div>
+    <div class="result-box" style="display: none;">
+        <h3>Generated Autograph</h3>
+        <div class="autograph-code">
+            <code id="autographed-caption"></code>
+        </div>
+        <div class="caption-info">
+            <p><strong>Original Caption:</strong> <span id="original-caption"></span></p>
+            <p><strong>Autograph Code:</strong> <span id="autograph-code"></span></p>
+        </div>
+        <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+        <div class="alert alert-success mt-3" style="display: none;" id="copySuccess">
+            Autograph code copied to clipboard!
+        </div>
+    </div>
 </div>
+
+<script>
+document.getElementById('autographForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/api/generate', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.querySelector('.result-box').style.display = 'block';
+            document.getElementById('autographed-caption').textContent = data.combined_text;
+            document.getElementById('original-caption').textContent = data.original_caption;
+            document.getElementById('autograph-code').textContent = data.autograph;
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating the autograph.');
+    });
+});
+
+function copyToClipboard() {
+    const codeElement = document.getElementById('autographed-caption');
+    const textArea = document.createElement('textarea');
+    textArea.value = codeElement.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    const successAlert = document.getElementById('copySuccess');
+    successAlert.style.display = 'block';
+    setTimeout(() => {
+        successAlert.style.display = 'none';
+    }, 3000);
+}
+</script>
 {% endblock %}
