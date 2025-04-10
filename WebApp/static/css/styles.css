@@ -18,6 +18,16 @@ footer {
 
 .form-group {
     margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    margin-top: 5px;
+}
+
+.form-control {
+    margin-bottom: 5px;
 }
 
 .info-box {

@@ -7,8 +7,10 @@
     <h1>Generate Autograph</h1>
     <form id="autographForm" action="{{ url_for('generate_autograph') }}" method="POST">
         <div class="form-group">
-            <label for="instagram_url">Paste post URL:</label>
-            <input type="text" class="form-control" id="instagramUrl" name="instagram_url" required>
+            <label for="instagram_url">Paste Instagram URL:</label>
+            <input type="text" class="form-control" id="instagramUrl" name="instagram_url" required 
+                   placeholder="https://www.instagram.com/p/... or https://www.instagram.com/reel/...">
+            <small class="form-text text-muted">Supports both Instagram posts and reels. Make sure the content is public.</small>
         </div>
         <button type="submit" class="btn btn-primary">Generate Autographed Caption</button>
     </form>

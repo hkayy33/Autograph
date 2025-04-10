@@ -18,26 +18,32 @@ def generate_random_value(length=10):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def extract_caption_from_instagram(instagram_url):
-    """Extract the caption from an Instagram post URL"""
+    """Extract the caption from an Instagram post or reel URL"""
     try:
         # Create an instance of Instaloader
         L = instaloader.Instaloader()
         
-        # Extract the shortcode from the URL
-        shortcode_match = re.search(r'/p/([^/]+)', instagram_url)
-        if not shortcode_match:
-            return "Caption not found"
-            
-        shortcode = shortcode_match.group(1)
+        # Extract the shortcode from the URL - handle both posts and reels
+        post_match = re.search(r'/p/([^/]+)', instagram_url)
+        reel_match = re.search(r'/reel/([^/]+)', instagram_url)
         
-        # Load the post using the shortcode
-        post = instaloader.Post.from_shortcode(L.context, shortcode)
-        
-        # Return the caption or a default message
-        return post.caption or "No caption found"
+        if post_match:
+            shortcode = post_match.group(1)
+            # Load the post using the shortcode
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            # Return the caption or a default message
+            return post.caption or "No caption found"
+        elif reel_match:
+            shortcode = reel_match.group(1)
+            # Load the reel using the shortcode
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            # Return the caption or a default message
+            return post.caption or "No caption found"
+        else:
+            return "Invalid Instagram URL format. Please use a post or reel URL."
     except Exception as e:
         print(f"Error extracting caption: {str(e)}")
-        return "Error fetching caption"
+        return "Error fetching caption. Make sure the URL is for a public post or reel."
 
 def init_app(app):
     @app.route('/')
