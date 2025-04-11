@@ -48,9 +48,8 @@ def extract_caption_from_instagram(instagram_url):
 def init_app(app):
     @app.route('/')
     def home():
-        # Get all autographs and display them
-        autographs = Autograph.query.all()
-        return render_template('index.html', autographs=autographs)
+        # Instead of displaying all autographs, just show a welcome page
+        return render_template('index.html')
 
     @app.route('/generate', methods=['GET', 'POST'])
     def generate_code():
