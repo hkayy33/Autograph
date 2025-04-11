@@ -73,38 +73,46 @@ def init_app(app):
 
     @app.route('/api/generate', methods=['POST'])
     def generate_autograph():
+        instagram_url = request.form.get('instagram_url')
+        
+        # Validate URL
+        if not instagram_url or not re.match(r'https?://(www\.)?instagram\.com/.+', instagram_url):
+            return jsonify({'status': 'error', 'message': 'Invalid Instagram URL'}), 400
+        
         try:
-            # Get URL from form data
-            instagram_url = request.form['instagram_url']
+            # Check for duplicate URL
+            existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
+            if existing_autograph:
+                return jsonify({
+                    'status': 'duplicate',
+                    'message': 'This URL already has an autograph',
+                    'autograph_id': existing_autograph.id
+                }), 200
+
+            caption = extract_caption_from_instagram(instagram_url)
+            if caption == "No caption found":
+                caption = ""
             
-            # Generate autograph
-            autograph = generate_random_value()  # Generate a random autograph
+            encrypted_code = generate_random_value()
+            combined_text = f"{caption}\n\n{encrypted_code}" if caption else encrypted_code
             
-            # Get the original caption
-            original_caption = extract_caption_from_instagram(instagram_url)
-            
-            # Combine caption and autograph
-            combined_text = f"{original_caption} {autograph}"
-            
-            # Store in database
-            new_record = Autograph(
+            # Create new autograph
+            new_autograph = Autograph(
                 instagram_url=instagram_url,
-                encrypted_code=autograph
+                encrypted_code=encrypted_code
             )
-            db.session.add(new_record)
+            db.session.add(new_autograph)
             db.session.commit()
             
             return jsonify({
-                "status": "success",
-                "autograph": autograph,
-                "original_caption": original_caption,
-                "combined_text": combined_text
+                'status': 'success',
+                'combined_text': combined_text,
+                'original_caption': caption,
+                'autograph_code': encrypted_code
             })
-        
-        except KeyError:
-            return jsonify({"error": "Instagram URL missing"}), 400
+            
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
     @app.route('/encrypt', methods=['POST'])
     def encrypt():
