@@ -3,8 +3,18 @@
 {% block title %}Generate Autograph{% endblock %}
 
 {% block content %}
+<style>
+    .generate-title {
+        color: #343a40 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 1.5rem;
+    }
+</style>
 <div class="generate-container">
-    <h1>Generate Autograph</h1>
+    <h1 class="generate-title">Generate Autograph</h1>
     <form id="autographForm" action="{{ url_for('generate_autograph') }}" method="POST">
         <div class="form-group">
             <label for="instagram_url">Paste Instagram URL:</label>

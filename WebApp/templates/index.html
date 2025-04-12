@@ -4,39 +4,75 @@
 
 {% block content %}
 <div class="container">
-    <div class="jumbotron text-center">
-        <h1 class="display-4">Welcome to Autograph</h1>
-        <p class="lead">Generate unique autographed captions for your Instagram posts and reels.</p>
-        <hr class="my-4">
-        <p>Your autographs are private and secure. Only you can see the autographs you generate.</p>
+    <div class="hero-section text-center py-5">
+        <h1 class="display-4 fw-bold mb-4">Welcome to Autograph</h1>
+        <p class="lead mb-4">Generate unique autographed captions for your Instagram posts and reels.</p>
+        <p class="text-muted mb-5">Your autographs are private and secure.</p>
         <a href="{{ url_for('generate_code') }}" class="btn btn-primary btn-lg">Generate New Autograph</a>
     </div>
     
-    <div class="row mt-5">
+    <div class="features-section row g-4 mt-4">
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">How It Works</h5>
-                    <p class="card-text">Enter an Instagram post or reel URL, and we'll generate a unique autograph code that's added to the caption.</p>
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">🎯</div>
+                    <h5 class="card-title fw-bold mb-3">How It Works</h5>
+                    <p class="card-text text-muted">Enter an Instagram post or reel URL, and we'll generate a unique autograph code that's added to the caption.</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Private & Secure</h5>
-                    <p class="card-text">Your autographs are stored securely and are not publicly visible to other users.</p>
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">🔒</div>
+                    <h5 class="card-title fw-bold mb-3">Private & Secure</h5>
+                    <p class="card-text text-muted">Your autographs are stored securely and are not publicly visible to other users.</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Easy to Use</h5>
-                    <p class="card-text">Simply copy and paste the autographed caption to your Instagram post or reel.</p>
+            <div class="card h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon mb-3">✨</div>
+                    <h5 class="card-title fw-bold mb-3">Easy to Use</h5>
+                    <p class="card-text text-muted">Simply copy and paste the autographed caption to your Instagram post or reel.</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .hero-section {
+            padding: 4rem 0;
+        }
+        
+        .display-4 {
+            font-size: 3.5rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 1.5rem;
+        }
+
+        .lead {
+            font-size: 1.25rem;
+            color: #495057;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .features-section {
+            margin-top: 3rem;
+        }
+
+        .card-title {
+            color: var(--primary-color);
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+    </style>
 </div>
 {% endblock %} 
