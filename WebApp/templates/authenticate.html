@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Authenticate Content{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Authenticate Content</h2>
+    <p class="lead">Verify the authenticity of Instagram content by providing either the URL or the caption.</p>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Option 1: Verify by Instagram URL</h5>
+            <form method="POST" action="{{ url_for('verify_code') }}" class="mb-4">
+                <div class="form-group">
+                    <label for="instagram_url">Instagram URL:</label>
+                    <input type="url" class="form-control" id="instagram_url" name="instagram_url" 
+                           placeholder="https://www.instagram.com/p/..." required>
+                    <small class="form-text text-muted">Enter the URL of the Instagram post or reel you want to verify.</small>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Verify URL</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Option 2: Verify by Caption Text</h5>
+            <form method="POST" action="{{ url_for('verify_code') }}" class="mb-4">
+                <div class="form-group">
+                    <label for="caption_text">Caption Text:</label>
+                    <textarea class="form-control" id="caption_text" name="caption_text" rows="5" 
+                              placeholder="Paste the entire caption here..." required></textarea>
+                    <small class="form-text text-muted">Paste the complete caption including any invisible authentication code.</small>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Verify Caption</button>
+            </form>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mt-4" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %} 

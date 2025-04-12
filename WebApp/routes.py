@@ -1,4 +1,4 @@
-from flask import jsonify, request, render_template
+from flask import jsonify, request, render_template, flash
 from .encryption import Encryptor
 from .models import Autograph, db
 from dotenv import load_dotenv
@@ -98,8 +98,109 @@ def extract_caption_from_instagram(instagram_url):
 def init_app(app):
     @app.route('/')
     def home():
-        # Instead of displaying all autographs, just show a welcome page
         return render_template('index.html')
+
+    @app.route('/verify', methods=['GET', 'POST'])
+    def verify_code():
+        if request.method == 'POST':
+            # Check which verification method is being used
+            instagram_url = request.form.get('instagram_url', '')
+            caption_text = request.form.get('caption_text', '')
+            
+            # If Instagram URL is provided, fetch the caption
+            if instagram_url:
+                try:
+                    caption_text = extract_caption_from_instagram(instagram_url)
+                    if caption_text == "No caption found" or caption_text.startswith("Error fetching"):
+                        flash("Unable to extract caption from the provided URL", "danger")
+                        return render_template('authenticate.html')
+                except Exception as e:
+                    flash(f"Error fetching caption: {str(e)}", "danger")
+                    return render_template('authenticate.html')
+            
+            # Extract and decode zero-width characters
+            zero_width_chars = ''.join(char for char in caption_text if char in ['\u200b', '\u200c'])
+            
+            if not zero_width_chars:
+                return render_template('authenticate_result.html', 
+                                    is_authentic=False, 
+                                    reason="No authentication code found in the content")
+            
+            try:
+                decoded_code = decode_from_zero_width(zero_width_chars)
+                
+                # Check if the code exists in database
+                autograph = Autograph.query.filter_by(encrypted_code=decoded_code).first()
+                
+                if autograph:
+                    return render_template('authenticate_result.html', 
+                                        is_authentic=True, 
+                                        autograph=autograph,
+                                        decoded_code=decoded_code,
+                                        instagram_url=autograph.instagram_url)
+                else:
+                    return render_template('authenticate_result.html', 
+                                        is_authentic=False,
+                                        reason="Authentication code not found in our records",
+                                        decoded_code=decoded_code)
+            except Exception as e:
+                flash(f"Error decoding authentication code: {str(e)}", "danger")
+                return render_template('authenticate_result.html', 
+                                    is_authentic=False,
+                                    reason=f"Error decoding: {str(e)}")
+                
+        return render_template('authenticate.html')
+
+    @app.route('/authenticate', methods=['GET', 'POST'])
+    def authenticate():
+        if request.method == 'POST':
+            # Check which verification method is being used
+            instagram_url = request.form.get('instagram_url', '')
+            caption_text = request.form.get('caption_text', '')
+            
+            # If Instagram URL is provided, fetch the caption
+            if instagram_url:
+                try:
+                    caption_text = extract_caption_from_instagram(instagram_url)
+                    if caption_text == "No caption found" or caption_text.startswith("Error fetching"):
+                        flash("Unable to extract caption from the provided URL", "danger")
+                        return render_template('authenticate.html')
+                except Exception as e:
+                    flash(f"Error fetching caption: {str(e)}", "danger")
+                    return render_template('authenticate.html')
+            
+            # Extract and decode zero-width characters
+            zero_width_chars = ''.join(char for char in caption_text if char in ['\u200b', '\u200c'])
+            
+            if not zero_width_chars:
+                return render_template('authenticate_result.html', 
+                                    is_authentic=False, 
+                                    reason="No authentication code found in the content")
+            
+            try:
+                decoded_code = decode_from_zero_width(zero_width_chars)
+                
+                # Check if the code exists in database
+                autograph = Autograph.query.filter_by(encrypted_code=decoded_code).first()
+                
+                if autograph:
+                    return render_template('authenticate_result.html', 
+                                        is_authentic=True, 
+                                        autograph=autograph,
+                                        decoded_code=decoded_code,
+                                        instagram_url=autograph.instagram_url)
+                else:
+                    return render_template('authenticate_result.html', 
+                                        is_authentic=False,
+                                        reason="Authentication code not found in our records",
+                                        decoded_code=decoded_code)
+            except Exception as e:
+                flash(f"Error decoding authentication code: {str(e)}", "danger")
+                return render_template('authenticate_result.html', 
+                                    is_authentic=False,
+                                    reason=f"Error decoding: {str(e)}")
+                
+        return render_template('authenticate.html')
 
     @app.route('/generate', methods=['GET', 'POST'])
     def generate_code():
@@ -180,28 +281,6 @@ def init_app(app):
         except Exception as e:
             print(f"Error in generate_autograph: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)}), 500
-
-    @app.route('/verify', methods=['GET', 'POST'])
-    def verify_code():
-        if request.method == 'POST':
-            caption_text = request.form.get('caption_text', '')
-            
-            # Extract and decode zero-width characters
-            zero_width_chars = ''.join(char for char in caption_text if char in ['\u200b', '\u200c'])
-            decoded_code = decode_from_zero_width(zero_width_chars)
-            
-            # Check if the code exists in database
-            autograph = Autograph.query.filter_by(encrypted_code=decoded_code).first()
-            
-            if autograph:
-                return render_template('verify_result.html', 
-                                    is_authentic=True, 
-                                    autograph=autograph,
-                                    decoded_code=decoded_code)
-            else:
-                return render_template('verify_result.html', 
-                                    is_authentic=False)
-        return render_template('verify.html')
 
     @app.route('/encrypt', methods=['POST'])
     def encrypt():

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication Result{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Authentication Result</h2>
+
+    {% if is_authentic %}
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">✅ Content Verified!</h4>
+            <p>This content has been verified as authentic.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Details</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Instagram URL:</strong>
+                        <a href="{{ instagram_url }}" target="_blank">{{ instagram_url }}</a>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Created:</strong>
+                        {{ autograph.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">❌ Unverified Content</h4>
+            <p>This content could not be verified.</p>
+            {% if reason %}
+                <hr>
+                <p class="mb-0">Reason: {{ reason }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('verify_code') }}" class="btn btn-primary">Verify Another</a>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mt-4" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %} 
