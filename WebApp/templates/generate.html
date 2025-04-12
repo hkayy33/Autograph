@@ -46,26 +46,36 @@
 document.getElementById('autographForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
+    const instagramUrl = document.getElementById('instagramUrl').value;
     
     fetch('/api/generate', {
         method: 'POST',
-        body: formData
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            instagram_url: instagramUrl
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'An error occurred');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.status === 'success') {
+        if (data.success) {
             document.querySelector('.result-box').style.display = 'block';
             document.getElementById('autographed-caption').textContent = data.combined_text;
-            document.getElementById('original-caption').textContent = data.original_caption;
-            document.getElementById('autograph-code').textContent = data.autograph;
         } else {
-            alert('Error: ' + data.error);
+            alert('Error: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while generating the autograph.');
+        alert(error.message || 'An error occurred while generating the autograph.');
     });
 });
 

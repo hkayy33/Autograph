@@ -103,53 +103,47 @@ def init_app(app):
     @app.route('/verify', methods=['GET', 'POST'])
     def verify_code():
         if request.method == 'POST':
-            # Check which verification method is being used
-            instagram_url = request.form.get('instagram_url', '')
-            caption_text = request.form.get('caption_text', '')
+            instagram_url = request.form.get('instagram_url')
+            caption = request.form.get('caption')
             
-            # If Instagram URL is provided, fetch the caption
-            if instagram_url:
-                try:
-                    caption_text = extract_caption_from_instagram(instagram_url)
-                    if caption_text == "No caption found" or caption_text.startswith("Error fetching"):
-                        flash("Unable to extract caption from the provided URL", "danger")
-                        return render_template('authenticate.html')
-                except Exception as e:
-                    flash(f"Error fetching caption: {str(e)}", "danger")
-                    return render_template('authenticate.html')
-            
-            # Extract and decode zero-width characters
-            zero_width_chars = ''.join(char for char in caption_text if char in ['\u200b', '\u200c'])
-            
-            if not zero_width_chars:
-                return render_template('authenticate_result.html', 
-                                    is_authentic=False, 
-                                    reason="No authentication code found in the content")
+            if not instagram_url and not caption:
+                return render_template('verify.html', error="Please provide either an Instagram URL or caption")
             
             try:
+                if instagram_url:
+                    # Extract caption from Instagram URL
+                    caption = extract_caption_from_instagram(instagram_url)
+                    if not caption:
+                        return render_template('verify.html', error="Could not extract caption from URL")
+                
+                # Extract zero-width characters from caption
+                zero_width_chars = ''.join(char for char in caption if char in ['\u200b', '\u200c'])
+                if not zero_width_chars:
+                    return render_template('verify.html', error="No hidden code found in the caption")
+                
+                # Decode the zero-width characters
                 decoded_code = decode_from_zero_width(zero_width_chars)
                 
-                # Check if the code exists in database
-                autograph = Autograph.query.filter_by(encrypted_code=decoded_code).first()
+                # Find autograph with matching encrypted code AND Instagram URL
+                autograph = Autograph.query.filter_by(
+                    encrypted_code=decoded_code,
+                    instagram_url=instagram_url
+                ).first()
                 
                 if autograph:
-                    return render_template('authenticate_result.html', 
-                                        is_authentic=True, 
+                    return render_template('verify.html', 
+                                        success=True,
                                         autograph=autograph,
-                                        decoded_code=decoded_code,
-                                        instagram_url=autograph.instagram_url)
+                                        instagram_url=instagram_url)
                 else:
-                    return render_template('authenticate_result.html', 
-                                        is_authentic=False,
-                                        reason="Authentication code not found in our records",
-                                        decoded_code=decoded_code)
-            except Exception as e:
-                flash(f"Error decoding authentication code: {str(e)}", "danger")
-                return render_template('authenticate_result.html', 
-                                    is_authentic=False,
-                                    reason=f"Error decoding: {str(e)}")
+                    return render_template('verify.html', 
+                                        error="The autograph could not be verified. Please ensure you are using the correct Instagram post URL.")
                 
-        return render_template('authenticate.html')
+            except Exception as e:
+                print(f"Error in verify_code: {str(e)}")
+                return render_template('verify.html', error="An error occurred during verification")
+        
+        return render_template('verify.html')
 
     @app.route('/authenticate', methods=['GET', 'POST'])
     def authenticate():
@@ -236,51 +230,60 @@ def init_app(app):
 
     @app.route('/api/generate', methods=['POST'])
     def generate_autograph():
-        instagram_url = request.form.get('instagram_url')
-        
-        # Validate URL
-        if not instagram_url or not re.match(r'https?://(www\.)?instagram\.com/.+', instagram_url):
-            return jsonify({'status': 'error', 'message': 'Invalid Instagram URL'}), 400
-        
         try:
-            # Check for duplicate URL
+            # Check if the request has JSON content type
+            if not request.is_json:
+                return jsonify({
+                    'error': 'Invalid request format',
+                    'message': 'Please send the request with Content-Type: application/json'
+                }), 415
+            
+            data = request.get_json()
+            instagram_url = data.get('instagram_url')
+            
+            if not instagram_url:
+                return jsonify({
+                    'error': 'Missing required field',
+                    'message': 'Instagram URL is required'
+                }), 400
+            
+            # Check if an autograph already exists for this URL
             existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
             if existing_autograph:
                 return jsonify({
-                    'status': 'duplicate',
-                    'message': 'This URL already has an autograph',
-                    'autograph_id': existing_autograph.id
-                }), 200
-
-            caption = extract_caption_from_instagram(instagram_url)
-            if caption == "No caption found":
-                caption = ""
+                    'error': 'Duplicate autograph',
+                    'message': 'An autograph has already been generated for this Instagram post',
+                    'existing_id': existing_autograph.id
+                }), 400
             
-            # Generate and encode the autograph
-            autograph = generate_random_value()
-            invisible_code = encode_to_zero_width(autograph)
+            # Generate random code
+            random_code = generate_random_value()
             
-            # Combine caption with invisible code
-            combined_text = f"{caption}{invisible_code}"
+            # Encrypt the code
+            encrypted_code = encryptor.encrypt(random_code)
             
             # Create new autograph
-            new_autograph = Autograph(
+            autograph = Autograph(
                 instagram_url=instagram_url,
-                encrypted_code=autograph
+                encrypted_code=encrypted_code
             )
-            db.session.add(new_autograph)
+            
+            db.session.add(autograph)
             db.session.commit()
             
             return jsonify({
-                'status': 'success',
-                'combined_text': combined_text,
-                'original_caption': caption,
-                'autograph_code': autograph
+                'success': True,
+                'message': 'Autograph generated successfully',
+                'autograph_id': autograph.id,
+                'encrypted_code': encrypted_code
             })
             
         except Exception as e:
             print(f"Error in generate_autograph: {str(e)}")
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+            return jsonify({
+                'error': 'Server error',
+                'message': 'An unexpected error occurred while processing your request'
+            }), 500
 
     @app.route('/encrypt', methods=['POST'])
     def encrypt():

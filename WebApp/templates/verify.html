@@ -1,1 +1,44 @@
- 
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Verify Autograph</h2>
+                    
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if success and autograph %}
+                        <div class="alert alert-success" role="alert">
+                            <h4 class="alert-heading">Verification Successful!</h4>
+                            <p>The autograph has been verified as authentic.</p>
+                            <hr>
+                            <p class="mb-0">Instagram URL: <a href="{{ instagram_url }}" target="_blank">{{ instagram_url }}</a></p>
+                            <p class="mb-0">Created at: {{ autograph.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('verify_code') }}">
+                        <div class="mb-3">
+                            <label for="instagram_url" class="form-label">Instagram Post URL</label>
+                            <input type="url" class="form-control" id="instagram_url" name="instagram_url" 
+                                   placeholder="https://www.instagram.com/p/..." required>
+                            <div class="form-text">Enter the URL of the Instagram post containing the autograph.</div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Verify Autograph</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
