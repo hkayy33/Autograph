@@ -1,54 +1,94 @@
 {% extends "base.html" %}
 
+{% block title %}Verify Autograph{% endblock %}
+
 {% block content %}
-<style>
-    .verify-title {
-        color: #343a40 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-        font-size: 2.5rem !important;
-        font-weight: 900 !important;
-        letter-spacing: -0.02em !important;
-        margin-bottom: 1.5rem;
-    }
-</style>
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <h2 class="verify-title text-center mb-4">Verify Autograph</h2>
-                    
-                    {% if error %}
-                        <div class="alert alert-danger" role="alert">
-                            {{ error }}
-                        </div>
-                    {% endif %}
-                    
-                    {% if success and autograph %}
-                        <div class="alert alert-success" role="alert">
-                            <h4 class="alert-heading">Verification Successful!</h4>
-                            <p>The autograph has been verified as authentic.</p>
-                            <hr>
-                            <p class="mb-0">Instagram URL: <a href="{{ instagram_url }}" target="_blank">{{ instagram_url }}</a></p>
-                            <p class="mb-0">Created at: {{ autograph.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                        </div>
-                    {% endif %}
-                    
-                    <form method="POST" action="{{ url_for('verify_code') }}">
-                        <div class="mb-3">
-                            <label for="instagram_url" class="form-label">Instagram Post URL</label>
-                            <input type="url" class="form-control" id="instagram_url" name="instagram_url" 
-                                   placeholder="https://www.instagram.com/p/..." required>
-                            <div class="form-text">Enter the URL of the Instagram post containing the autograph.</div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Verify Autograph</button>
-                        </div>
-                    </form>
+<div class="generate-container">
+    <h2 class="text-center mb-4">Verify Instagram Autograph</h2>
+    
+    {% if error %}
+        <div class="notification notification-danger animate__animated animate__fadeInDown">
+            <div class="notification-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="notification-content">{{ error }}</div>
+            <button type="button" class="notification-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    {% endif %}
+
+    {% if success %}
+        <div class="modern-alert modern-alert-success animate__animated animate__fadeIn">
+            <div class="modern-alert-content">
+                <div class="modern-alert-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="modern-alert-text">
+                    <h3>Verification Successful!</h3>
+                    <p>The autograph has been verified as authentic.</p>
+                </div>
+            </div>
+            <div class="modern-alert-details">
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="fab fa-instagram"></i>
+                        <span>Instagram Post</span>
+                    </div>
+                    <a href="{{ instagram_url }}" target="_blank" class="detail-value instagram-link">
+                        View Post <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="far fa-clock"></i>
+                        <span>Created at</span>
+                    </div>
+                    <div class="detail-value">{{ autograph.timestamp.strftime('%B %d, %Y') }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Status</span>
+                    </div>
+                    <div class="detail-value status-badge">
+                        <span class="status-dot"></span>
+                        Verified
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    {% else %}
+        <form method="POST" class="mt-4">
+            <div class="form-group">
+                <label for="instagram_url">Instagram Post URL</label>
+                <input type="url" class="form-control" id="instagram_url" name="instagram_url" required
+                       placeholder="https://www.instagram.com/p/...">
+                <small class="form-text">Enter the URL of the Instagram post containing the autograph you want to verify.</small>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check-circle me-2"></i> Verify Autograph
+                </button>
+            </div>
+        </form>
+    {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add loading state to button on form submission
+    const form = document.querySelector('form');
+    const submitButton = form?.querySelector('button[type="submit"]');
+    
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<div class="loading-success"></div> Verifying...';
+            }
+        });
+    }
+});
+</script>
 {% endblock %} 
