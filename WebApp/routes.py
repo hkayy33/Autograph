@@ -150,24 +150,28 @@ def init_app(app):
                 autographs = Autograph.query.all()
                 
                 # Find matching autograph by comparing post IDs
+                found_valid_code = False
+                matching_url = None
+                
                 for autograph in autographs:
                     stored_post_id = extract_post_id(autograph.instagram_url)
                     print(f"DEBUG: Comparing post IDs - Input: {post_id}, Stored: {stored_post_id}")
                     
-                    if stored_post_id == post_id:
-                        print(f"DEBUG: Found matching post ID")
+                    # Decrypt the stored encryption code
+                    try:
+                        stored_code = encryptor.decrypt(autograph.encryption_code)
+                        print(f"DEBUG: Decrypted stored code: {stored_code}")
                         
-                        # Decrypt the stored encryption code
-                        try:
-                            stored_code = encryptor.decrypt(autograph.encryption_code)
-                            print(f"DEBUG: Decrypted stored code: {stored_code}")
-                            
-                            # Try each code chunk
-                            for chunk in code_chunks:
-                                print(f"DEBUG: Comparing chunk {chunk} with stored code {stored_code}")
-                                if chunk == stored_code:
-                                    print("DEBUG: Codes match!")
-                                    # Make sure we have a valid autograph object with created_at
+                        # Try each code chunk
+                        for chunk in code_chunks:
+                            print(f"DEBUG: Comparing chunk {chunk} with stored code {stored_code}")
+                            if chunk == stored_code:
+                                print("DEBUG: Codes match!")
+                                found_valid_code = True
+                                matching_url = autograph.instagram_url
+                                
+                                # If post IDs match, this is a valid verification
+                                if stored_post_id == post_id:
                                     if autograph and hasattr(autograph, 'created_at'):
                                         return render_template('verify.html', 
                                                             success=True,
@@ -176,11 +180,15 @@ def init_app(app):
                                     else:
                                         return render_template('verify.html', 
                                                             error="Verification succeeded but autograph data is incomplete.")
-                                else:
-                                    print(f"DEBUG: Code chunk {chunk} does not match stored code")
-                        except Exception as decrypt_error:
-                            print(f"DEBUG: Decryption error: {str(decrypt_error)}")
-                            continue
+                    except Exception as decrypt_error:
+                        print(f"DEBUG: Decryption error: {str(decrypt_error)}")
+                        continue
+                
+                if found_valid_code:
+                    # We found a valid code but in the wrong post
+                    return render_template('verify.html', 
+                                        error=f"SUSPICIOUS: A valid autograph was found, but it belongs to a different post. Original post: {matching_url}",
+                                        is_suspicious=True)
                 
                 print("DEBUG: Verification failed")
                 return render_template('verify.html', 

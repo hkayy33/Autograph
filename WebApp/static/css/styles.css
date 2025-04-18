@@ -808,3 +808,23 @@ body {
         justify-content: center;
     }
 }
+
+.notification-danger {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+.notification-warning {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.notification-warning .notification-icon {
+    color: #f59e0b;
+}
+
+.notification-danger .notification-icon {
+    color: #ef4444;
+}
