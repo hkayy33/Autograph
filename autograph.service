@@ -1,0 +1,15 @@
+[Unit]
+Description=Autograph Flask Application
+After=network.target
+
+[Service]
+User=hassan
+Group=hassan
+WorkingDirectory=/Users/hassan/Autograph
+Environment="PATH=/Users/hassan/Autograph/venv/bin"
+Environment="FLASK_APP=run.py"
+Environment="FLASK_ENV=production"
+ExecStart=/Users/hassan/Autograph/venv/bin/gunicorn --config gunicorn_config.py "WebApp:create_app()"
+
+[Install]
+WantedBy=multi-user.target 

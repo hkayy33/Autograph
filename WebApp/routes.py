@@ -95,6 +95,11 @@ def extract_caption_from_instagram(instagram_url):
         print(f"Error extracting caption: {str(e)}")
         return "Error fetching caption. Make sure the URL is for a public post or reel."
 
+def extract_post_id(url):
+    """Extract the post/reel ID from an Instagram URL"""
+    match = re.search(r'/(p|reel)/([^/?]+)', url)
+    return match.group(2) if match else None
+
 def init_app(app):
     @app.route('/')
     def home():
@@ -116,28 +121,65 @@ def init_app(app):
                     if not caption:
                         return render_template('verify.html', error="Could not extract caption from URL")
                 
+                print(f"DEBUG: Verifying caption: {caption}")
+                
                 # Extract zero-width characters from caption
                 zero_width_chars = ''.join(char for char in caption if char in ['\u200b', '\u200c'])
                 if not zero_width_chars:
+                    print("DEBUG: No hidden code found in caption")
                     return render_template('verify.html', error="No hidden code found in the caption")
                 
-                # Decode the zero-width characters
+                print(f"DEBUG: Found zero-width characters")
+                
+                # Decode the zero-width characters to get the original random code
                 decoded_code = decode_from_zero_width(zero_width_chars)
+                print(f"DEBUG: Decoded code from caption: {decoded_code}")
                 
-                # Find autograph with matching encrypted code AND Instagram URL
-                autograph = Autograph.query.filter_by(
-                    encrypted_code=decoded_code,
-                    instagram_url=instagram_url
-                ).first()
+                # Split the decoded code into chunks of 10 characters (our random code length)
+                code_chunks = [decoded_code[i:i+10] for i in range(0, len(decoded_code), 10)]
+                print(f"DEBUG: Code chunks found: {code_chunks}")
                 
-                if autograph:
-                    return render_template('verify.html', 
-                                        success=True,
-                                        autograph=autograph,
-                                        instagram_url=instagram_url)
-                else:
-                    return render_template('verify.html', 
-                                        error="The autograph could not be verified. Please ensure you are using the correct Instagram post URL.")
+                # Extract post ID from the provided URL
+                post_id = extract_post_id(instagram_url)
+                print(f"DEBUG: Post ID from URL: {post_id}")
+                
+                if not post_id:
+                    return render_template('verify.html', error="Invalid Instagram URL format")
+                
+                # Find all autographs
+                autographs = Autograph.query.all()
+                
+                # Find matching autograph by comparing post IDs
+                for autograph in autographs:
+                    stored_post_id = extract_post_id(autograph.instagram_url)
+                    print(f"DEBUG: Comparing post IDs - Input: {post_id}, Stored: {stored_post_id}")
+                    
+                    if stored_post_id == post_id:
+                        print(f"DEBUG: Found matching post ID")
+                        
+                        # Decrypt the stored encryption code
+                        try:
+                            stored_code = encryptor.decrypt(autograph.encryption_code)
+                            print(f"DEBUG: Decrypted stored code: {stored_code}")
+                            
+                            # Try each code chunk
+                            for chunk in code_chunks:
+                                print(f"DEBUG: Comparing chunk {chunk} with stored code {stored_code}")
+                                if chunk == stored_code:
+                                    print("DEBUG: Codes match!")
+                                    return render_template('verify.html', 
+                                                        success=True,
+                                                        autograph=autograph,
+                                                        instagram_url=instagram_url)
+                                else:
+                                    print(f"DEBUG: Code chunk {chunk} does not match stored code")
+                        except Exception as decrypt_error:
+                            print(f"DEBUG: Decryption error: {str(decrypt_error)}")
+                            continue
+                
+                print("DEBUG: Verification failed")
+                return render_template('verify.html', 
+                                    error="The autograph could not be verified. Please ensure you are using the correct Instagram post URL.")
                 
             except Exception as e:
                 print(f"Error in verify_code: {str(e)}")
@@ -175,7 +217,7 @@ def init_app(app):
                 decoded_code = decode_from_zero_width(zero_width_chars)
                 
                 # Check if the code exists in database
-                autograph = Autograph.query.filter_by(encrypted_code=decoded_code).first()
+                autograph = Autograph.query.filter_by(encryption_code=decoded_code).first()
                 
                 if autograph:
                     return render_template('authenticate_result.html', 
@@ -231,8 +273,10 @@ def init_app(app):
     @app.route('/api/generate', methods=['POST'])
     def generate_autograph():
         try:
+            print("DEBUG: Starting generate_autograph")  # Debug log
             # Check if the request has JSON content type
             if not request.is_json:
+                print("DEBUG: Request is not JSON")  # Debug log
                 return jsonify({
                     'error': 'Invalid request format',
                     'message': 'Please send the request with Content-Type: application/json'
@@ -240,16 +284,25 @@ def init_app(app):
             
             data = request.get_json()
             instagram_url = data.get('instagram_url')
+            print(f"DEBUG: Received instagram_url: {instagram_url}")  # Debug log
             
             if not instagram_url:
+                print("DEBUG: No instagram_url provided")  # Debug log
                 return jsonify({
                     'error': 'Missing required field',
                     'message': 'Instagram URL is required'
                 }), 400
             
+            # Get caption from Instagram
+            caption = extract_caption_from_instagram(instagram_url)
+            print(f"DEBUG: Extracted caption: {caption}")  # Debug log
+            
             # Check if an autograph already exists for this URL
             existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
+            print(f"DEBUG: Existing autograph check result: {existing_autograph}")  # Debug log
+            
             if existing_autograph:
+                print("DEBUG: Found existing autograph")  # Debug log
                 return jsonify({
                     'error': 'Duplicate autograph',
                     'message': 'An autograph has already been generated for this Instagram post',
@@ -258,28 +311,42 @@ def init_app(app):
             
             # Generate random code
             random_code = generate_random_value()
+            print(f"DEBUG: Generated random code: {random_code}")  # Debug log
             
             # Encrypt the code
             encrypted_code = encryptor.encrypt(random_code)
+            print(f"DEBUG: Encrypted code generated")  # Debug log
+            
+            # Convert code to zero-width characters
+            invisible_code = encode_to_zero_width(random_code)
+            print(f"DEBUG: Converted to invisible code")  # Debug log
+            
+            # Combine caption with invisible code
+            combined_text = f"{caption}{invisible_code}"
+            print(f"DEBUG: Created combined text")  # Debug log
             
             # Create new autograph
             autograph = Autograph(
                 instagram_url=instagram_url,
-                encrypted_code=encrypted_code
+                encryption_code=encrypted_code
             )
             
+            print("DEBUG: About to add to database")  # Debug log
             db.session.add(autograph)
             db.session.commit()
+            print("DEBUG: Successfully committed to database")  # Debug log
             
             return jsonify({
                 'success': True,
                 'message': 'Autograph generated successfully',
                 'autograph_id': autograph.id,
-                'encrypted_code': encrypted_code
+                'encryption_code': encrypted_code,
+                'combined_text': combined_text
             })
             
         except Exception as e:
-            print(f"Error in generate_autograph: {str(e)}")
+            print(f"DEBUG: Error in generate_autograph: {str(e)}")  # Debug log
+            db.session.rollback()  # Add rollback in case of error
             return jsonify({
                 'error': 'Server error',
                 'message': 'An unexpected error occurred while processing your request'

@@ -6,7 +6,7 @@ class Autograph(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     instagram_url = db.Column(db.String(500), unique=True, nullable=False)
-    encrypted_code = db.Column(db.Text, nullable=False)
+    encryption_code = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
     def __repr__(self):
