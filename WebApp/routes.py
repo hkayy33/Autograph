@@ -167,10 +167,15 @@ def init_app(app):
                                 print(f"DEBUG: Comparing chunk {chunk} with stored code {stored_code}")
                                 if chunk == stored_code:
                                     print("DEBUG: Codes match!")
-                                    return render_template('verify.html', 
-                                                        success=True,
-                                                        autograph=autograph,
-                                                        instagram_url=instagram_url)
+                                    # Make sure we have a valid autograph object with created_at
+                                    if autograph and hasattr(autograph, 'created_at'):
+                                        return render_template('verify.html', 
+                                                            success=True,
+                                                            autograph=autograph,
+                                                            instagram_url=instagram_url)
+                                    else:
+                                        return render_template('verify.html', 
+                                                            error="Verification succeeded but autograph data is incomplete.")
                                 else:
                                     print(f"DEBUG: Code chunk {chunk} does not match stored code")
                         except Exception as decrypt_error:
