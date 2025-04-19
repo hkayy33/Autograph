@@ -23,41 +23,46 @@
     {% endif %}
 
     {% if success %}
-        <div class="modern-alert modern-alert-success animate__animated animate__fadeIn">
-            <div class="modern-alert-content">
-                <div class="modern-alert-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <div class="modern-alert-text">
-                    <h3>Verification Successful!</h3>
-                    <p>The autograph has been verified as authentic.</p>
-                </div>
+        <div class="verification-success-card animate__animated animate__fadeInUp">
+            <div class="success-icon">
+                <i class="fas fa-shield-check"></i>
+                <div class="success-ring"></div>
             </div>
-            <div class="modern-alert-details">
-                <div class="detail-item">
-                    <div class="detail-label">
+            <div class="success-content">
+                <h3>Verification Successful!</h3>
+                <p>This Instagram post contains a genuine Autograph signature.</p>
+            </div>
+            <div class="success-details">
+                <div class="detail-row">
+                    <div class="detail-icon">
                         <i class="fab fa-instagram"></i>
-                        <span>Instagram Post</span>
                     </div>
-                    <a href="{{ instagram_url }}" target="_blank" class="detail-value instagram-link">
-                        View Post <i class="fas fa-external-link-alt"></i>
-                    </a>
+                    <div class="detail-info">
+                        <label>Instagram Post</label>
+                        <a href="{{ instagram_url }}" target="_blank" class="post-link">
+                            View Original Post <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="far fa-clock"></i>
-                        <span>Created at</span>
+                <div class="detail-row">
+                    <div class="detail-icon">
+                        <i class="far fa-calendar-check"></i>
                     </div>
-                    <div class="detail-value">{{ autograph.created_at.strftime('%B %d, %Y') }}</div>
+                    <div class="detail-info">
+                        <label>Verified On</label>
+                        <span>{{ autograph.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Status</span>
+                <div class="detail-row">
+                    <div class="detail-icon">
+                        <i class="fas fa-fingerprint"></i>
                     </div>
-                    <div class="detail-value status-badge">
-                        <span class="status-dot"></span>
-                        Verified
+                    <div class="detail-info">
+                        <label>Authenticity</label>
+                        <div class="authenticity-badge">
+                            <span class="pulse-dot"></span>
+                            Verified Original
+                        </div>
                     </div>
                 </div>
             </div>

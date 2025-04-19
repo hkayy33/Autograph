@@ -4,74 +4,145 @@
 
 {% block content %}
 <div class="container">
-    <div class="hero-section text-center py-5">
-        <h1 class="display-4 fw-bold mb-4">Welcome to Autograph</h1>
-        <p class="lead mb-4">Generate unique autographed captions for your <b>Instagram</b> posts and reels.</p>
-        <p class="text-muted mb-5">Your autographs are private and secure.</p>
-        <a href="{{ url_for('generate_code') }}" class="btn btn-primary btn-lg">Generate New Autograph</a>
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold">Welcome to Autograph</h1>
+        <p class="lead">A secure platform for generating and verifying digital signatures for your Instagram posts.</p>
     </div>
-    
-    <div class="features-section row g-4 mt-4">
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body p-4">
-                    <div class="feature-icon mb-3">🎯</div>
-                    <h5 class="card-title fw-bold mb-3">How It Works</h5>
-                    <p class="card-text text-muted">Enter an Instagram post or reel URL, and we'll generate a unique autograph code that's added to the caption.</p>
-                </div>
+
+    <div class="action-cards">
+        <a href="{{ url_for('generate_code') }}" class="action-card generate-card">
+            <div class="action-content">
+                <h2>Generate Autograph</h2>
+                <p>Create a unique digital signature for your Instagram post.</p>
+                <div class="action-button">Generate Now</div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body p-4">
-                    <div class="feature-icon mb-3">🔒</div>
-                    <h5 class="card-title fw-bold mb-3">Private & Secure</h5>
-                    <p class="card-text text-muted">Your autographs are stored securely and are not publicly visible to other users.</p>
-                </div>
+        </a>
+
+        <a href="{{ url_for('verify_code') }}" class="action-card verify-card">
+            <div class="action-content">
+                <h2>Verify Autograph</h2>
+                <p>Verify the authenticity of an Instagram post's digital signature.</p>
+                <div class="action-button">Verify Now</div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body p-4">
-                    <div class="feature-icon mb-3">✨</div>
-                    <h5 class="card-title fw-bold mb-3">Easy to Use</h5>
-                    <p class="card-text text-muted">Simply copy and paste the autographed caption to your Instagram post or reel.</p>
-                </div>
-            </div>
-        </div>
+        </a>
     </div>
 
     <style>
         .hero-section {
-            padding: 4rem 0;
+            padding: 3rem 0;
+            text-align: center;
         }
         
         .display-4 {
             font-size: 3.5rem;
             letter-spacing: -0.02em;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .lead {
             font-size: 1.25rem;
-            color: #495057;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .feature-icon {
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+            padding: 1rem;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-speed);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), var(--success-color));
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+
+        .action-card:hover::before {
+            opacity: 1;
+        }
+
+        .action-content {
+            text-align: center;
+        }
+
+        .action-content h2 {
             font-size: 2rem;
+            font-weight: 700;
             margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .features-section {
-            margin-top: 3rem;
+        .action-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
         }
 
-        .card-title {
-            color: var(--primary-color);
+        .action-button {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all var(--transition-speed);
         }
 
-        .text-muted {
-            color: #6c757d !important;
+        .action-card:hover .action-button {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .action-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .action-card {
+                padding: 2rem;
+            }
+
+            .display-4 {
+                font-size: 2.5rem;
+            }
+
+            .action-content h2 {
+                font-size: 1.75rem;
+            }
         }
     </style>
 </div>
