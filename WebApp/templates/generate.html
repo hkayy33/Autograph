@@ -19,9 +19,32 @@
         margin: 15px 0;
         word-wrap: break-word;
     }
+    #errorAlert {
+        display: none;
+        margin-bottom: 20px;
+    }
+    #loadingSpinner {
+        display: none;
+        margin: 20px 0;
+    }
 </style>
 <div class="generate-container">
     <h1 class="generate-title">Generate Autograph</h1>
+    
+    <!-- Error Alert -->
+    <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span id="errorMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Generating autograph...</p>
+    </div>
+
     <form id="autographForm" action="{{ url_for('generate_autograph') }}" method="POST">
         <div class="form-group">
             <label for="instagram_url">Paste Instagram URL:</label>
@@ -29,7 +52,7 @@
                    placeholder="https://www.instagram.com/p/... or https://www.instagram.com/reel/...">
             <small class="form-text text-muted">Supports both Instagram posts and reels. Make sure the content is public.</small>
         </div>
-        <button type="submit" class="btn btn-primary">Generate Autographed Caption</button>
+        <button type="submit" class="btn btn-primary" id="submitButton">Generate Autographed Caption</button>
     </form>
     <div class="info-box">
         <p>The "Autographed" caption contains a secret invisible code at the end of the caption, which is used as an authentication identifier.</p>
@@ -50,8 +73,33 @@
 </div>
 
 <script>
+function showError(message) {
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorAlert.style.display = 'block';
+}
+
+function hideError() {
+    document.getElementById('errorAlert').style.display = 'none';
+}
+
+function showLoading(show = true) {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const submitButton = document.getElementById('submitButton');
+    if (show) {
+        loadingSpinner.style.display = 'block';
+        submitButton.disabled = true;
+    } else {
+        loadingSpinner.style.display = 'none';
+        submitButton.disabled = false;
+    }
+}
+
 document.getElementById('autographForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    hideError();
+    showLoading(true);
     
     const instagramUrl = document.getElementById('instagramUrl').value;
     
@@ -65,27 +113,26 @@ document.getElementById('autographForm').addEventListener('submit', function(e) 
         })
     })
     .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.message || 'An error occurred');
-            });
-        }
-        return response.json();
+        return response.json().then(data => ({
+            ok: response.ok,
+            status: response.status,
+            data: data
+        }));
     })
-    .then(data => {
-        if (data.success) {
-            document.querySelector('.result-box').style.display = 'block';
-            // Store the combined text in a data attribute
-            const captionElement = document.getElementById('autographed-caption');
-            captionElement.textContent = data.combined_text || '';
-            captionElement.dataset.fullText = data.combined_text || '';
-        } else {
-            alert('Error: ' + data.message);
+    .then(({ok, status, data}) => {
+        showLoading(false);
+        if (!ok) {
+            throw new Error(data.message || 'An error occurred while generating the autograph');
         }
+        document.querySelector('.result-box').style.display = 'block';
+        const captionElement = document.getElementById('autographed-caption');
+        captionElement.textContent = data.combined_text || '';
+        captionElement.dataset.fullText = data.combined_text || '';
     })
     .catch(error => {
         console.error('Error:', error);
-        alert(error.message || 'An error occurred while generating the autograph.');
+        showLoading(false);
+        showError(error.message || 'An unexpected error occurred while generating the autograph');
     });
 });
 

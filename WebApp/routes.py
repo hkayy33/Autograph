@@ -1,6 +1,7 @@
-from flask import jsonify, request, render_template, flash
-from .encryption import Encryptor
-from .models import Autograph, db
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from WebApp.encryption import Encryptor
+from WebApp.models import db, Autograph, InviteCode
+from flask_login import login_user, login_required, logout_user, current_user
 from dotenv import load_dotenv
 import os
 import random
@@ -105,6 +106,51 @@ def init_app(app):
     def home():
         return render_template('index.html')
 
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        next_page = request.args.get('next')
+        
+        if current_user.is_authenticated:
+            if current_user.is_admin:
+                return redirect(url_for('admin'))
+            return redirect(next_page or url_for('generate_code'))
+
+        if request.method == 'POST':
+            instagram_handle = request.form.get('instagram_handle', '').strip()
+            code = request.form.get('code', '').strip()
+
+            if not instagram_handle or not code:
+                flash('Please enter both Instagram handle and invite code.', 'error')
+                return render_template('login.html')
+
+            user = InviteCode.authenticate(instagram_handle, code)
+            if user:
+                login_user(user, remember=True)
+                flash('Login successful!', 'success')
+                if user.is_admin:
+                    return redirect(url_for('admin'))
+                return redirect(next_page or url_for('generate_code'))
+            else:
+                flash('Invalid credentials or code already used.', 'error')
+                return render_template('login.html')
+
+        return render_template('login.html')
+
+    @app.route('/logout')
+    @login_required
+    def logout():
+        logout_user()
+        flash('You have been logged out.', 'info')
+        return redirect(url_for('home'))
+
+    @app.route('/admin')
+    @login_required
+    def admin():
+        if not current_user.is_admin:
+            flash('Access denied. Admin privileges required.', 'error')
+            return redirect(url_for('generate_code'))
+        return render_template('admin.html')
+
     @app.route('/verify', methods=['GET', 'POST'])
     def verify_code():
         if request.method == 'POST':
@@ -140,10 +186,10 @@ def init_app(app):
                 print(f"DEBUG: Code chunks found: {code_chunks}")
                 
                 # Extract post ID from the provided URL
-                post_id = extract_post_id(instagram_url)
-                print(f"DEBUG: Post ID from URL: {post_id}")
+                input_post_id = extract_post_id(instagram_url)
+                print(f"DEBUG: Post ID from URL: {input_post_id}")
                 
-                if not post_id:
+                if not input_post_id:
                     return render_template('verify.html', error="Invalid Instagram URL format")
                 
                 # Find all autographs
@@ -155,34 +201,21 @@ def init_app(app):
                 
                 for autograph in autographs:
                     stored_post_id = extract_post_id(autograph.instagram_url)
-                    print(f"DEBUG: Comparing post IDs - Input: {post_id}, Stored: {stored_post_id}")
+                    print(f"DEBUG: Comparing post IDs - Input: {input_post_id}, Stored: {stored_post_id}")
                     
-                    # Decrypt the stored encryption code
-                    try:
-                        stored_code = encryptor.decrypt(autograph.encryption_code)
-                        print(f"DEBUG: Decrypted stored code: {stored_code}")
+                    # Check if the code matches
+                    if autograph.encryption_code in code_chunks:
+                        print("DEBUG: Found matching code!")
+                        found_valid_code = True
+                        matching_url = autograph.instagram_url
                         
-                        # Try each code chunk
-                        for chunk in code_chunks:
-                            print(f"DEBUG: Comparing chunk {chunk} with stored code {stored_code}")
-                            if chunk == stored_code:
-                                print("DEBUG: Codes match!")
-                                found_valid_code = True
-                                matching_url = autograph.instagram_url
-                                
-                                # If post IDs match, this is a valid verification
-                                if stored_post_id == post_id:
-                                    if autograph and hasattr(autograph, 'created_at'):
-                                        return render_template('verify.html', 
-                                                            success=True,
-                                                            autograph=autograph,
-                                                            instagram_url=instagram_url)
-                                    else:
-                                        return render_template('verify.html', 
-                                                            error="Verification succeeded but autograph data is incomplete.")
-                    except Exception as decrypt_error:
-                        print(f"DEBUG: Decryption error: {str(decrypt_error)}")
-                        continue
+                        # If post IDs match, this is a valid verification
+                        if stored_post_id == input_post_id:
+                            print("DEBUG: Post IDs match!")
+                            return render_template('verify.html', 
+                                                success=True,
+                                                autograph=autograph,
+                                                instagram_url=instagram_url)
                 
                 if found_valid_code:
                     # We found a valid code but in the wrong post
@@ -252,44 +285,50 @@ def init_app(app):
         return render_template('authenticate.html')
 
     @app.route('/generate', methods=['GET', 'POST'])
+    @login_required
     def generate_code():
         if request.method == 'POST':
-            instagram_url = request.form['instagram_url']
-            
-            # Generate autograph
-            autograph = generate_random_value()  # Generate a random autograph
-            
-            # Get caption from Instagram
-            caption = extract_caption_from_instagram(instagram_url)
-            
-            # Convert autograph to zero-width characters
-            invisible_code = encode_to_zero_width(autograph)
-            
-            # Combine caption with invisible code
-            combined_text = f"{caption}{invisible_code}"
-            
-            # Store in database
-            new_record = Autograph(
-                instagram_url=instagram_url,
-                encrypted_code=autograph  # Store the original code
-            )
-            db.session.add(new_record)
-            db.session.commit()
-            
-            return render_template('result.html', 
-                                instagram_url=instagram_url, 
-                                encrypted_code=autograph,
-                                combined_text=combined_text)
+            try:
+                instagram_url = request.form['instagram_url']
+                
+                # Get caption from Instagram
+                caption = extract_caption_from_instagram(instagram_url)
+                if not caption or caption == "Error fetching caption. Make sure the URL is for a public post or reel.":
+                    return render_template('generate.html', error="Could not fetch caption. Please make sure the URL is correct and the post is public.")
+                
+                # Generate autograph
+                random_code = generate_random_value()
+                
+                # Convert autograph to zero-width characters
+                invisible_code = encode_to_zero_width(random_code)
+                
+                # Combine caption with invisible code
+                combined_text = f"{caption}{invisible_code}"
+                
+                # Store in database
+                new_record = Autograph(
+                    instagram_url=instagram_url,
+                    encryption_code=random_code
+                )
+                db.session.add(new_record)
+                db.session.commit()
+                
+                return render_template('result.html', 
+                                    instagram_url=instagram_url, 
+                                    encrypted_code=random_code,
+                                    combined_text=combined_text)
+            except Exception as e:
+                print(f"Error generating autograph: {str(e)}")
+                return render_template('generate.html', error=f"An error occurred: {str(e)}")
         
         return render_template('generate.html')
 
     @app.route('/api/generate', methods=['POST'])
     def generate_autograph():
         try:
-            print("DEBUG: Starting generate_autograph")  # Debug log
-            # Check if the request has JSON content type
+            print("DEBUG: Starting generate_autograph")
             if not request.is_json:
-                print("DEBUG: Request is not JSON")  # Debug log
+                print("DEBUG: Request is not JSON")
                 return jsonify({
                     'error': 'Invalid request format',
                     'message': 'Please send the request with Content-Type: application/json'
@@ -297,10 +336,10 @@ def init_app(app):
             
             data = request.get_json()
             instagram_url = data.get('instagram_url')
-            print(f"DEBUG: Received instagram_url: {instagram_url}")  # Debug log
+            print(f"DEBUG: Received instagram_url: {instagram_url}")
             
             if not instagram_url:
-                print("DEBUG: No instagram_url provided")  # Debug log
+                print("DEBUG: No instagram_url provided")
                 return jsonify({
                     'error': 'Missing required field',
                     'message': 'Instagram URL is required'
@@ -308,14 +347,14 @@ def init_app(app):
             
             # Get caption from Instagram
             caption = extract_caption_from_instagram(instagram_url)
-            print(f"DEBUG: Extracted caption: {caption}")  # Debug log
+            print(f"DEBUG: Extracted caption: {caption}")
             
             # Check if an autograph already exists for this URL
             existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
-            print(f"DEBUG: Existing autograph check result: {existing_autograph}")  # Debug log
+            print(f"DEBUG: Existing autograph check result: {existing_autograph}")
             
             if existing_autograph:
-                print("DEBUG: Found existing autograph")  # Debug log
+                print("DEBUG: Found existing autograph")
                 return jsonify({
                     'error': 'Duplicate autograph',
                     'message': 'An autograph has already been generated for this Instagram post',
@@ -324,45 +363,41 @@ def init_app(app):
             
             # Generate random code
             random_code = generate_random_value()
-            print(f"DEBUG: Generated random code: {random_code}")  # Debug log
-            
-            # Encrypt the code
-            encrypted_code = encryptor.encrypt(random_code)
-            print(f"DEBUG: Encrypted code generated")  # Debug log
+            print(f"DEBUG: Generated random code: {random_code}")
             
             # Convert code to zero-width characters
             invisible_code = encode_to_zero_width(random_code)
-            print(f"DEBUG: Converted to invisible code")  # Debug log
+            print(f"DEBUG: Converted to invisible code")
             
             # Combine caption with invisible code
             combined_text = f"{caption}{invisible_code}"
-            print(f"DEBUG: Created combined text")  # Debug log
+            print(f"DEBUG: Created combined text")
             
             # Create new autograph
             autograph = Autograph(
                 instagram_url=instagram_url,
-                encryption_code=encrypted_code
+                encryption_code=random_code
             )
             
-            print("DEBUG: About to add to database")  # Debug log
+            print("DEBUG: About to add to database")
             db.session.add(autograph)
             db.session.commit()
-            print("DEBUG: Successfully committed to database")  # Debug log
+            print("DEBUG: Successfully committed to database")
             
             return jsonify({
                 'success': True,
                 'message': 'Autograph generated successfully',
                 'autograph_id': autograph.id,
-                'encryption_code': encrypted_code,
+                'encrypted_code': random_code,
                 'combined_text': combined_text
             })
             
         except Exception as e:
-            print(f"DEBUG: Error in generate_autograph: {str(e)}")  # Debug log
-            db.session.rollback()  # Add rollback in case of error
+            print(f"DEBUG: Error in generate_autograph: {str(e)}")
+            db.session.rollback()
             return jsonify({
                 'error': 'Server error',
-                'message': 'An unexpected error occurred while processing your request'
+                'message': str(e)
             }), 500
 
     @app.route('/encrypt', methods=['POST'])
@@ -380,3 +415,91 @@ def init_app(app):
             return jsonify({'error': 'No text provided'}), 400
         decrypted_text = encryptor.decrypt(data['text'])
         return jsonify({'decrypted_text': decrypted_text})
+
+    @app.route('/api/admin/invite-codes', methods=['GET'])
+    @login_required
+    def list_invite_codes():
+        print("Accessing list_invite_codes endpoint")
+        if not current_user.is_admin:
+            print("Access denied: User is not admin")
+            return jsonify({'error': 'Access denied'}), 403
+        try:
+            print("Fetching invite codes from database...")
+            codes = InviteCode.query.order_by(InviteCode.created_at.desc()).all()
+            print(f"Found {len(codes)} invite codes")
+            
+            result = []
+            for code in codes:
+                try:
+                    code_data = {
+                        'id': code.id,
+                        'code': code.code,
+                        'instagram_handle': code.instagram_handle,
+                        'is_used': code.is_used,
+                        'created_at': code.created_at.isoformat() if code.created_at else None,
+                        'used_at': code.used_at.isoformat() if code.used_at else None
+                    }
+                    result.append(code_data)
+                except Exception as e:
+                    print(f"Error processing code {code.id}: {str(e)}")
+                    continue
+            
+            print("Successfully prepared response")
+            return jsonify(result)
+        except Exception as e:
+            print(f"Error in list_invite_codes: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            db.session.rollback()
+            return jsonify({'error': f'Failed to load invite codes. Error: {str(e)}'}), 500
+
+    @app.route('/api/admin/invite-codes', methods=['POST'])
+    @login_required
+    def create_invite_code():
+        if not current_user.is_admin:
+            return jsonify({'error': 'Access denied'}), 403
+        data = request.get_json()
+        if not data or 'instagram_handle' not in data:
+            return jsonify({'error': 'Instagram handle is required'}), 400
+
+        handle = data['instagram_handle'].strip().lower()
+        if handle.startswith('@'):
+            handle = handle[1:]
+
+        # Generate a unique invite code
+        code = 'INV-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        
+        new_code = InviteCode(
+            code=code,
+            instagram_handle=handle,
+            is_used=False
+        )
+        
+        try:
+            db.session.add(new_code)
+            db.session.commit()
+            return jsonify({
+                'id': new_code.id,
+                'code': new_code.code,
+                'instagram_handle': new_code.instagram_handle,
+                'is_used': new_code.is_used,
+                'created_at': new_code.created_at.isoformat(),
+                'used_at': None
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/admin/invite-codes/<int:code_id>', methods=['DELETE'])
+    @login_required
+    def delete_invite_code(code_id):
+        if not current_user.is_admin:
+            return jsonify({'error': 'Access denied'}), 403
+        code = InviteCode.query.get_or_404(code_id)
+        try:
+            db.session.delete(code)
+            db.session.commit()
+            return '', 204
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
