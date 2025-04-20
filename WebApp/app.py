@@ -40,6 +40,16 @@ def load_user(user_id):
 # Initialize routes
 init_app(app)
 
+# Enforce HTTPS in production
+if not app.debug:
+    @app.before_request
+    def enforce_https():
+        if request.headers.get('X-Forwarded-Proto') == 'http':
+            return redirect(
+                'https://' + request.headers['Host'] + request.full_path, 
+                code=301
+            )
+
 @app.after_request
 def add_security_headers(response):
     """Add security headers to all responses."""
