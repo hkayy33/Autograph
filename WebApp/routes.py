@@ -8,7 +8,7 @@ import random
 import string
 import instaloader
 import re
-from .validation import validate_instagram_url, validate_caption
+from .validation import validate_instagram_url, validate_caption, sanitize_input, sanitize_instagram_handle, sanitize_url, sanitize_caption
 from flask_limiter import Limiter
 
 # Load environment variables
@@ -119,8 +119,8 @@ def init_app(app, limiter):
             return redirect(next_page or url_for('generate_code'))
 
         if request.method == 'POST':
-            instagram_handle = request.form.get('instagram_handle', '').strip()
-            code = request.form.get('code', '').strip()
+            instagram_handle = sanitize_instagram_handle(request.form.get('instagram_handle', ''))
+            code = sanitize_input(request.form.get('code', ''))
 
             if not instagram_handle or not code:
                 flash('Please enter both Instagram handle and invite code.', 'error')
@@ -292,8 +292,8 @@ def init_app(app, limiter):
     @login_required
     def generate_code():
         if request.method == 'POST':
-            instagram_url = request.form.get('instagram_url', '').strip()
-            caption = request.form.get('caption', '').strip()
+            instagram_url = sanitize_url(request.form.get('instagram_url', ''))
+            caption = sanitize_caption(request.form.get('caption', ''))
 
             # Validate Instagram URL
             url_valid, url_result = validate_instagram_url(instagram_url)

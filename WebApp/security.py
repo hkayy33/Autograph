@@ -25,11 +25,17 @@ def configure_security(app):
             # Content Security Policy - Strict but allows necessary resources
             response.headers['Content-Security-Policy'] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline'; "
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
                 "img-src 'self' data:; "
                 "font-src 'self' https://cdnjs.cloudflare.com; "
-                "connect-src 'self';"
+                "connect-src 'self'; "
+                "frame-ancestors 'self'; "
+                "form-action 'self'; "
+                "base-uri 'self'; "
+                "object-src 'none'; "
+                "media-src 'self'; "
+                "frame-src 'self';"
             )
         
         return response

@@ -2,6 +2,7 @@ import re
 import bleach
 from urllib.parse import urlparse, parse_qs
 import logging
+from flask import current_app
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -114,4 +115,69 @@ def contains_malicious_patterns(text):
         if re.search(pattern, text, re.IGNORECASE | re.DOTALL):
             return True
 
-    return False 
+    return False
+
+def sanitize_input(text):
+    """Sanitize user input to prevent XSS attacks"""
+    if text is None:
+        return ""
+    
+    # Define allowed tags and attributes
+    allowed_tags = ['b', 'i', 'u', 'em', 'strong', 'p', 'br', 'span']
+    allowed_attrs = {
+        '*': ['class', 'style'],
+        'span': ['class', 'style']
+    }
+    
+    # Clean the text using bleach
+    return bleach.clean(
+        text,
+        tags=allowed_tags,
+        attributes=allowed_attrs,
+        strip=True,
+        strip_comments=True
+    )
+
+def sanitize_instagram_handle(handle):
+    """Sanitize Instagram handle input"""
+    if not handle:
+        return ""
+    
+    # Remove @ symbol if present
+    handle = handle.lstrip('@')
+    
+    # Only allow alphanumeric characters, dots, and underscores
+    handle = re.sub(r'[^a-zA-Z0-9._]', '', handle)
+    
+    return handle.lower()
+
+def sanitize_url(url):
+    """Sanitize URL input"""
+    if not url:
+        return ""
+    
+    # Basic URL validation
+    url = url.strip()
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+    
+    # Remove any script tags or other potentially dangerous content
+    return bleach.clean(url, tags=[], attributes=[], strip=True)
+
+def sanitize_caption(caption):
+    """Sanitize Instagram caption input"""
+    if not caption:
+        return ""
+    
+    # Define allowed tags and attributes for captions
+    allowed_tags = ['b', 'i', 'u', 'em', 'strong', 'p', 'br']
+    allowed_attrs = {'*': ['class']}
+    
+    # Clean the caption
+    return bleach.clean(
+        caption,
+        tags=allowed_tags,
+        attributes=allowed_attrs,
+        strip=True,
+        strip_comments=True
+    ) 
