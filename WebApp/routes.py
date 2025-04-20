@@ -298,15 +298,15 @@ def init_app(app):
                 flash(url_message, 'error')
                 return render_template('generate.html')
 
-            # Validate caption
-            caption_valid, caption_message = validate_caption(caption)
+            # Validate and sanitize caption
+            caption_valid, caption_result = validate_caption(caption)
             if not caption_valid:
-                flash(caption_message, 'error')
+                flash(caption_result, 'error')
                 return render_template('generate.html')
 
             try:
-                # Proceed with existing code for encryption and storage
-                encrypted_caption = encryptor.encrypt(caption)
+                # Use the sanitized caption
+                encrypted_caption = encryptor.encrypt(caption_result)
                 autograph = Autograph(instagram_url=instagram_url, encryption_code=encrypted_caption)
                 db.session.add(autograph)
                 db.session.commit()
