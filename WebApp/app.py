@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 from WebApp.encryption import Encryptor
 from WebApp.models import db, Autograph, InviteCode
 from WebApp.routes import init_app
 from WebApp.config import Config
 from WebApp.security import configure_security
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user, logout_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -13,6 +13,8 @@ import instaloader
 import secrets
 import logging
 import logging.handlers
+from datetime import datetime, timedelta
+from flask import flash
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -109,6 +111,28 @@ def handle_exception(e):
 
 # Initialize routes with rate limiter
 init_app(app, limiter)
+
+@app.before_request
+def check_session_timeout():
+    """Check for session timeout"""
+    if current_user.is_authenticated:
+        # Get the last activity time from the session
+        last_activity = session.get('last_activity')
+        now = datetime.utcnow()
+        
+        # Set session timeout to 30 minutes
+        session_timeout = timedelta(minutes=30)
+        
+        if last_activity:
+            last_activity = datetime.fromisoformat(last_activity)
+            # If last activity is older than timeout, log out user
+            if now - last_activity > session_timeout:
+                logout_user()
+                flash('Your session has expired. Please log in again.', 'warning')
+                return redirect(url_for('login'))
+        
+        # Update last activity time
+        session['last_activity'] = now.isoformat()
 
 if __name__ == '__main__':
     with app.app_context():
