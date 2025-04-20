@@ -305,9 +305,7 @@ def init_app(app, limiter):
             post_id = url_result
 
             # Check if an autograph already exists for this post
-            existing_autograph = Autograph.query.filter(
-                Autograph.instagram_url.like(f"%/p/{post_id}/%")
-            ).first()
+            existing_autograph = Autograph.find_by_instagram_url(f"/p/{post_id}/")
 
             if existing_autograph:
                 flash('An autograph already exists for this post. Please use the existing one.', 'warning')
@@ -447,15 +445,11 @@ def init_app(app, limiter):
     @app.route('/api/admin/invite-codes', methods=['GET'])
     @login_required
     def list_invite_codes():
-        print("Accessing list_invite_codes endpoint")
         if not current_user.is_admin:
-            print("Access denied: User is not admin")
             return jsonify({'error': 'Access denied'}), 403
+        
         try:
-            print("Fetching invite codes from database...")
-            codes = InviteCode.query.order_by(InviteCode.created_at.desc()).all()
-            print(f"Found {len(codes)} invite codes")
-            
+            codes = InviteCode.get_all_codes()
             result = []
             for code in codes:
                 try:
@@ -469,15 +463,12 @@ def init_app(app, limiter):
                     }
                     result.append(code_data)
                 except Exception as e:
-                    print(f"Error processing code {code.id}: {str(e)}")
+                    logger.error(f"Error processing code {code.id}: {str(e)}")
                     continue
             
-            print("Successfully prepared response")
             return jsonify(result)
         except Exception as e:
-            print(f"Error in list_invite_codes: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error in list_invite_codes: {str(e)}")
             db.session.rollback()
             return jsonify({'error': f'Failed to load invite codes. Error: {str(e)}'}), 500
 
@@ -492,12 +483,10 @@ def init_app(app, limiter):
         if not data or 'instagram_handle' not in data:
             return jsonify({'error': 'Instagram handle is required'}), 400
 
-        handle = data['instagram_handle'].strip().lower()
-        if handle.startswith('@'):
-            handle = handle[1:]
+        handle = sanitize_instagram_handle(data['instagram_handle'])
 
-        # Check if user already exists (either used or unused invite code)
-        existing_user = InviteCode.query.filter_by(instagram_handle=handle).first()
+        # Check if user already exists
+        existing_user = InviteCode.find_by_handle(handle)
         if existing_user:
             status = "used" if existing_user.is_used else "pending"
             return jsonify({
@@ -510,7 +499,7 @@ def init_app(app, limiter):
                     'created_at': existing_user.created_at.isoformat(),
                     'used_at': existing_user.used_at.isoformat() if existing_user.used_at else None
                 }
-            }), 409  # HTTP 409 Conflict
+            }), 409
 
         # Generate a unique invite code
         code = 'INV-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
