@@ -15,6 +15,10 @@ def configure_security(app):
         # XSS protection
         response.headers['X-XSS-Protection'] = '1; mode=block'
         
+        # Enable HSTS with a 1 year duration
+        if not app.debug:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
         # Set secure cookie attributes
         if 'Set-Cookie' in response.headers:
             response.headers['Set-Cookie'] += '; HttpOnly; SameSite=Lax'

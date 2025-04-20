@@ -27,3 +27,41 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
     if not SECRET_KEY:
         raise ValueError("SECRET_KEY environment variable is not set. Please set it in your .env file.")
+
+    # SSL/TLS Configuration
+    SSL_ENABLED = os.environ.get('SSL_ENABLED', 'True').lower() == 'true'
+    SSL_CERT_PATH = os.environ.get('SSL_CERT_PATH', '/etc/letsencrypt/live/your-domain/fullchain.pem')
+    SSL_KEY_PATH = os.environ.get('SSL_KEY_PATH', '/etc/letsencrypt/live/your-domain/privkey.pem')
+    
+    # Session security
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = 604800  # 7 days in seconds
+    
+    # Security headers are configured in security.py
+    
+    @staticmethod
+    def init_app(app):
+        pass
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+    SSL_ENABLED = False
+
+class ProductionConfig(Config):
+    DEBUG = False
+    SSL_ENABLED = True
+    
+    @classmethod
+    def init_app(cls, app):
+        Config.init_app(app)
+        
+        # Production-specific configuration
+        app.config['PREFERRED_URL_SCHEME'] = 'https'
+
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}

@@ -63,17 +63,11 @@ def create_app():
     # Create the Flask application instance
     app = Flask(__name__)
 
-    # Configure the application
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+    # Load configuration
+    app.config.from_object('config.Config')
     
-    # Session configuration
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # 7 days
-    app.config['SESSION_PERMANENT'] = True  # Sessions persist across browser restarts
-    app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+    # Ensure the instance folder exists
+    os.makedirs(app.instance_path, exist_ok=True)
     
     # Initialize the database with the app context
     init_db(app)
@@ -198,9 +192,19 @@ if __name__ == '__main__':
             db.create_all()
             app.logger.info("Database tables created successfully")
         except Exception as e:
-            app.logger.error(f"Error creating database tables: {e}")
+            app.logger.error(f"Error creating database tables: {str(e)}", exc_info=True)
     
-    try:
-        app.run(host='0.0.0.0', port=5002, debug=True)
-    except Exception as e:
-        app.logger.error(f"Error starting the server: {e}")
+    ssl_context = None
+    if app.config.get('SSL_ENABLED', False):
+        ssl_context = (
+            app.config.get('SSL_CERT_PATH'),
+            app.config.get('SSL_KEY_PATH')
+        )
+        app.logger.info(f"SSL enabled with cert: {ssl_context[0]} and key: {ssl_context[1]}")
+    
+    app.run(
+        host='0.0.0.0',
+        port=5001,
+        ssl_context=ssl_context,
+        debug=app.config['DEBUG']
+    )
