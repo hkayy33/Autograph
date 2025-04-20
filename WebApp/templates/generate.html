@@ -27,6 +27,15 @@
         display: none;
         margin: 20px 0;
     }
+    .code-only {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .code-only-message {
+        color: #dc3545;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
 </style>
 <div class="generate-container">
     <h1 class="generate-title">Generate Autograph</h1>
@@ -62,8 +71,11 @@
         <div class="autograph-code">
             <p id="autographed-caption"></p>
         </div>
+        <div id="code-only-message" class="code-only-message" style="display: none;">
+            Instagram API requires authentication. Only the zero-width characters will be copied.
+        </div>
         <div class="caption-info">
-            <p>Copy the "Autographed" caption and paste it into your Instagram post or reel.</p>
+            <p id="caption-instructions"></p>
         </div>
         <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
         <div class="alert alert-success mt-3" style="display: none;" id="copySuccess">
@@ -126,7 +138,20 @@ document.getElementById('autographForm').addEventListener('submit', function(e) 
         }
         document.querySelector('.result-box').style.display = 'block';
         const captionElement = document.getElementById('autographed-caption');
-        captionElement.textContent = data.combined_text || '';
+        const instructionsElement = document.getElementById('caption-instructions');
+        const codeOnlyMessage = document.getElementById('code-only-message');
+        
+        if (data.use_only_code) {
+            captionElement.textContent = "Zero-width characters only";
+            captionElement.classList.add('code-only');
+            codeOnlyMessage.style.display = 'block';
+            instructionsElement.textContent = "Click 'Copy to Clipboard' to copy the zero-width characters.";
+        } else {
+            captionElement.textContent = data.combined_text || '';
+            captionElement.classList.remove('code-only');
+            codeOnlyMessage.style.display = 'none';
+            instructionsElement.textContent = "Copy the 'Autographed' caption and paste it into your Instagram post or reel.";
+        }
         captionElement.dataset.fullText = data.combined_text || '';
     })
     .catch(error => {

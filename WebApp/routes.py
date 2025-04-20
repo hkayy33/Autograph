@@ -9,11 +9,39 @@ import string
 import instaloader
 import re
 from .validation import validate_instagram_url, validate_caption
+from playwright.sync_api import sync_playwright
+import time
+import subprocess
+from importlib.metadata import version
 
 # Load environment variables
 load_dotenv()
 encryption_key = os.getenv('ENCRYPTION_KEY')
 encryptor = Encryptor(encryption_key)  # Create an instance of the Encryptor
+
+def check_instaloader_version():
+    """Check and update Instaloader to the latest version"""
+    try:
+        # Get current version
+        current_version = version('instaloader')
+        print(f"DEBUG: Current Instaloader version: {current_version}")
+        
+        # Run pip install --upgrade
+        subprocess.check_call(['pip', 'install', '--upgrade', 'instaloader'])
+        
+        # Get new version
+        new_version = version('instaloader')
+        print(f"DEBUG: Updated Instaloader version: {new_version}")
+        
+        if new_version != current_version:
+            print(f"DEBUG: Instaloader updated from {current_version} to {new_version}")
+        else:
+            print("DEBUG: Instaloader already at latest version")
+    except Exception as e:
+        print(f"DEBUG: Error updating Instaloader: {str(e)}")
+
+# Check Instaloader version at startup
+check_instaloader_version()
 
 def generate_random_value(length=10):
     """Generate a random string of specified length"""
@@ -69,33 +97,137 @@ def decode_from_zero_width(zero_width_text):
     
     return text
 
+def init_instagram_session():
+    """Initialize Instagram session with Instaloader"""
+    try:
+        L = instaloader.Instaloader(
+            max_connection_attempts=1,
+            download_videos=False,
+            download_video_thumbnails=False,
+            download_geotags=False,
+            download_comments=False,
+            save_metadata=False,
+            compress_json=False
+        )
+        
+        # Try to load existing session
+        try:
+            L.load_session_from_file(os.getenv('INSTAGRAM_USERNAME'))
+            print("DEBUG: Successfully loaded existing Instagram session")
+            return L
+        except FileNotFoundError:
+            print("DEBUG: No existing session found")
+            # If no session exists, create a new one
+            if os.getenv('INSTAGRAM_USERNAME') and os.getenv('INSTAGRAM_PASSWORD'):
+                try:
+                    L.login(os.getenv('INSTAGRAM_USERNAME'), os.getenv('INSTAGRAM_PASSWORD'))
+                    L.save_session_to_file()
+                    print("DEBUG: Created and saved new Instagram session")
+                    return L
+                except Exception as e:
+                    print(f"DEBUG: Login failed: {str(e)}")
+                    return None
+            else:
+                print("DEBUG: Instagram credentials not found in environment")
+                return None
+    except Exception as e:
+        print(f"DEBUG: Error initializing Instagram session: {str(e)}")
+        return None
+
 def extract_caption_from_instagram(instagram_url):
     """Extract the caption from an Instagram post or reel URL"""
     try:
-        # Create an instance of Instaloader
-        L = instaloader.Instaloader()
+        # Create an instance of Instaloader with minimal settings
+        L = instaloader.Instaloader(
+            download_pictures=False,
+            download_videos=False,
+            download_video_thumbnails=False,
+            download_geotags=False,
+            download_comments=False,
+            save_metadata=False,
+            compress_json=False,
+            max_connection_attempts=1,
+            request_timeout=10
+        )
         
-        # Extract the shortcode from the URL - handle both posts and reels
         post_match = re.search(r'/p/([^/]+)', instagram_url)
         reel_match = re.search(r'/reel/([^/]+)', instagram_url)
         
-        if post_match:
-            shortcode = post_match.group(1)
-            # Load the post using the shortcode
-            post = instaloader.Post.from_shortcode(L.context, shortcode)
-            # Return the caption or a default message
-            return post.caption or "No caption found"
-        elif reel_match:
-            shortcode = reel_match.group(1)
-            # Load the reel using the shortcode
-            post = instaloader.Post.from_shortcode(L.context, shortcode)
-            # Return the caption or a default message
-            return post.caption or "No caption found"
+        if post_match or reel_match:
+            shortcode = (post_match or reel_match).group(1)
+            try:
+                # Try to get the post without authentication
+                post = instaloader.Post.from_shortcode(L.context, shortcode)
+                if post.caption:
+                    print("DEBUG: Successfully got caption from Instaloader")
+                    return post.caption
+                else:
+                    print("DEBUG: No caption found with Instaloader, trying Playwright")
+                    return extract_caption_with_playwright(instagram_url)
+            except Exception as e:
+                print(f"DEBUG: Instaloader failed: {str(e)}")
+                # If Instaloader fails, try with Playwright
+                return extract_caption_with_playwright(instagram_url)
         else:
-            return "Invalid Instagram URL format. Please use a post or reel URL."
+            print("DEBUG: Invalid URL format")
+            return "USE_ONLY_CODE"
     except Exception as e:
-        print(f"Error extracting caption: {str(e)}")
-        return "Error fetching caption. Make sure the URL is for a public post or reel."
+        print(f"DEBUG: Error in extract_caption_from_instagram: {str(e)}")
+        # If Instaloader fails completely, try with Playwright
+        return extract_caption_with_playwright(instagram_url)
+
+def extract_caption_with_playwright(url):
+    """Extract caption from Instagram using Playwright as a backup method"""
+    try:
+        with sync_playwright() as p:
+            # Launch browser in headless mode
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            
+            # Navigate to the Instagram post
+            page.goto(url)
+            
+            # Wait for the caption to load
+            page.wait_for_selector('article', timeout=10000)
+            
+            # Try to find the caption in different possible locations
+            caption = None
+            
+            # Try the main caption area first - looking for the actual caption text, not the header
+            caption_element = page.query_selector('article div._a9zs span')
+            if caption_element:
+                caption = caption_element.inner_text()
+            
+            # If no caption found, try the reel caption area
+            if not caption:
+                caption_element = page.query_selector('div._a9zr span')
+                if caption_element:
+                    caption = caption_element.inner_text()
+            
+            # If still no caption, try another possible caption area
+            if not caption:
+                caption_element = page.query_selector('div._a9zr span._aacl._aaco._aacu._aacx._aad7._aade')
+                if caption_element:
+                    caption = caption_element.inner_text()
+            
+            browser.close()
+            
+            if caption:
+                # Clean up the caption text
+                # Remove "Edited · Xd" and similar metadata
+                caption = re.sub(r'\s*Edited\s*·\s*\d+[dhm]\s*$', '', caption)
+                # Remove any username prefix if it somehow got included
+                caption = re.sub(r'^[^:]*:\s*', '', caption)
+                # Remove any trailing whitespace
+                print("DEBUG: Successfully got caption from Playwright")
+                return caption.strip()
+            else:
+                print("DEBUG: Playwright could not find caption")
+                return "USE_ONLY_CODE"
+                
+    except Exception as e:
+        print(f"DEBUG: Playwright error: {str(e)}")
+        return "USE_ONLY_CODE"
 
 def extract_post_id(url):
     """Extract the post/reel ID from an Instagram URL"""
@@ -165,8 +297,16 @@ def init_app(app):
                 if instagram_url:
                     # Extract caption from Instagram URL
                     caption = extract_caption_from_instagram(instagram_url)
-                    if not caption:
-                        return render_template('verify.html', error="Could not extract caption from URL")
+                    if caption == "USE_ONLY_CODE":
+                        # If we're using only code, we need to get the autograph directly
+                        autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
+                        if autograph:
+                            return render_template('verify.html', 
+                                                success=True,
+                                                autograph=autograph,
+                                                instagram_url=instagram_url)
+                        else:
+                            return render_template('verify.html', error="No autograph found for this URL")
                 
                 print(f"DEBUG: Verifying caption: {caption}")
                 
@@ -365,8 +505,12 @@ def init_app(app):
             invisible_code = encode_to_zero_width(random_code)
             print(f"DEBUG: Converted to invisible code")
             
-            # Combine caption with invisible code
-            combined_text = f"{caption}{invisible_code}"
+            # If caption is "USE_ONLY_CODE", only use the code
+            if caption == "USE_ONLY_CODE":
+                combined_text = invisible_code
+            else:
+                # Combine caption with invisible code
+                combined_text = f"{caption}{invisible_code}"
             print(f"DEBUG: Created combined text")
             
             # Create new autograph
@@ -385,7 +529,8 @@ def init_app(app):
                 'message': 'Autograph generated successfully',
                 'autograph_id': autograph.id,
                 'encrypted_code': random_code,
-                'combined_text': combined_text
+                'combined_text': combined_text,
+                'use_only_code': caption == "USE_ONLY_CODE"
             })
             
         except Exception as e:
