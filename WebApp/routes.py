@@ -8,40 +8,15 @@ import random
 import string
 import instaloader
 import re
-from .validation import validate_instagram_url, validate_caption
-from playwright.sync_api import sync_playwright
-import time
-import subprocess
-from importlib.metadata import version
+from .validation import validate_instagram_url, validate_caption, sanitize_input, sanitize_instagram_handle, sanitize_url, sanitize_caption
+from flask_limiter import Limiter
+from .monitoring import monitor_performance, capture_security_event, track_user_action
+import sentry_sdk
 
 # Load environment variables
 load_dotenv()
 encryption_key = os.getenv('ENCRYPTION_KEY')
 encryptor = Encryptor(encryption_key)  # Create an instance of the Encryptor
-
-def check_instaloader_version():
-    """Check and update Instaloader to the latest version"""
-    try:
-        # Get current version
-        current_version = version('instaloader')
-        print(f"DEBUG: Current Instaloader version: {current_version}")
-        
-        # Run pip install --upgrade
-        subprocess.check_call(['pip', 'install', '--upgrade', 'instaloader'])
-        
-        # Get new version
-        new_version = version('instaloader')
-        print(f"DEBUG: Updated Instaloader version: {new_version}")
-        
-        if new_version != current_version:
-            print(f"DEBUG: Instaloader updated from {current_version} to {new_version}")
-        else:
-            print("DEBUG: Instaloader already at latest version")
-    except Exception as e:
-        print(f"DEBUG: Error updating Instaloader: {str(e)}")
-
-# Check Instaloader version at startup
-check_instaloader_version()
 
 def generate_random_value(length=10):
     """Generate a random string of specified length"""
@@ -97,149 +72,46 @@ def decode_from_zero_width(zero_width_text):
     
     return text
 
-def init_instagram_session():
-    """Initialize Instagram session with Instaloader"""
-    try:
-        L = instaloader.Instaloader(
-            max_connection_attempts=1,
-            download_videos=False,
-            download_video_thumbnails=False,
-            download_geotags=False,
-            download_comments=False,
-            save_metadata=False,
-            compress_json=False
-        )
-        
-        # Try to load existing session
-        try:
-            L.load_session_from_file(os.getenv('INSTAGRAM_USERNAME'))
-            print("DEBUG: Successfully loaded existing Instagram session")
-            return L
-        except FileNotFoundError:
-            print("DEBUG: No existing session found")
-            # If no session exists, create a new one
-            if os.getenv('INSTAGRAM_USERNAME') and os.getenv('INSTAGRAM_PASSWORD'):
-                try:
-                    L.login(os.getenv('INSTAGRAM_USERNAME'), os.getenv('INSTAGRAM_PASSWORD'))
-                    L.save_session_to_file()
-                    print("DEBUG: Created and saved new Instagram session")
-                    return L
-                except Exception as e:
-                    print(f"DEBUG: Login failed: {str(e)}")
-                    return None
-            else:
-                print("DEBUG: Instagram credentials not found in environment")
-                return None
-    except Exception as e:
-        print(f"DEBUG: Error initializing Instagram session: {str(e)}")
-        return None
-
 def extract_caption_from_instagram(instagram_url):
     """Extract the caption from an Instagram post or reel URL"""
     try:
-        # Create an instance of Instaloader with minimal settings
-        L = instaloader.Instaloader(
-            download_pictures=False,
-            download_videos=False,
-            download_video_thumbnails=False,
-            download_geotags=False,
-            download_comments=False,
-            save_metadata=False,
-            compress_json=False,
-            max_connection_attempts=1,
-            request_timeout=10
-        )
+        # Create an instance of Instaloader
+        L = instaloader.Instaloader()
         
+        # Extract the shortcode from the URL - handle both posts and reels
         post_match = re.search(r'/p/([^/]+)', instagram_url)
         reel_match = re.search(r'/reel/([^/]+)', instagram_url)
         
-        if post_match or reel_match:
-            shortcode = (post_match or reel_match).group(1)
-            try:
-                # Try to get the post without authentication
-                post = instaloader.Post.from_shortcode(L.context, shortcode)
-                if post.caption:
-                    print("DEBUG: Successfully got caption from Instaloader")
-                    return post.caption
-                else:
-                    print("DEBUG: No caption found with Instaloader, trying Playwright")
-                    return extract_caption_with_playwright(instagram_url)
-            except Exception as e:
-                print(f"DEBUG: Instaloader failed: {str(e)}")
-                # If Instaloader fails, try with Playwright
-                return extract_caption_with_playwright(instagram_url)
+        if post_match:
+            shortcode = post_match.group(1)
+            # Load the post using the shortcode
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            # Return the caption or empty string if no caption
+            return post.caption or ""
+        elif reel_match:
+            shortcode = reel_match.group(1)
+            # Load the reel using the shortcode
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            # Return the caption or empty string if no caption
+            return post.caption or ""
         else:
-            print("DEBUG: Invalid URL format")
-            return "USE_ONLY_CODE"
+            return "Invalid Instagram URL format. Please use a post or reel URL."
     except Exception as e:
-        print(f"DEBUG: Error in extract_caption_from_instagram: {str(e)}")
-        # If Instaloader fails completely, try with Playwright
-        return extract_caption_with_playwright(instagram_url)
-
-def extract_caption_with_playwright(url):
-    """Extract caption from Instagram using Playwright as a backup method"""
-    try:
-        with sync_playwright() as p:
-            # Launch browser in headless mode
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            
-            # Navigate to the Instagram post
-            page.goto(url)
-            
-            # Wait for the caption to load
-            page.wait_for_selector('article', timeout=10000)
-            
-            # Try to find the caption in different possible locations
-            caption = None
-            
-            # Try the main caption area first - looking for the actual caption text, not the header
-            caption_element = page.query_selector('article div._a9zs span')
-            if caption_element:
-                caption = caption_element.inner_text()
-            
-            # If no caption found, try the reel caption area
-            if not caption:
-                caption_element = page.query_selector('div._a9zr span')
-                if caption_element:
-                    caption = caption_element.inner_text()
-            
-            # If still no caption, try another possible caption area
-            if not caption:
-                caption_element = page.query_selector('div._a9zr span._aacl._aaco._aacu._aacx._aad7._aade')
-                if caption_element:
-                    caption = caption_element.inner_text()
-            
-            browser.close()
-            
-            if caption:
-                # Clean up the caption text
-                # Remove "Edited · Xd" and similar metadata
-                caption = re.sub(r'\s*Edited\s*·\s*\d+[dhm]\s*$', '', caption)
-                # Remove any username prefix if it somehow got included
-                caption = re.sub(r'^[^:]*:\s*', '', caption)
-                # Remove any trailing whitespace
-                print("DEBUG: Successfully got caption from Playwright")
-                return caption.strip()
-            else:
-                print("DEBUG: Playwright could not find caption")
-                return "USE_ONLY_CODE"
-                
-    except Exception as e:
-        print(f"DEBUG: Playwright error: {str(e)}")
-        return "USE_ONLY_CODE"
+        print(f"Error extracting caption: {str(e)}")
+        return "Error fetching caption. Make sure the URL is for a public post or reel."
 
 def extract_post_id(url):
     """Extract the post/reel ID from an Instagram URL"""
     match = re.search(r'/(p|reel)/([^/?]+)', url)
     return match.group(2) if match else None
 
-def init_app(app):
+def init_app(app, limiter):
     @app.route('/')
     def home():
         return render_template('index.html')
 
     @app.route('/login', methods=['GET', 'POST'])
+    @limiter.limit("5 per minute")
     def login():
         next_page = request.args.get('next')
         
@@ -249,8 +121,8 @@ def init_app(app):
             return redirect(next_page or url_for('generate_code'))
 
         if request.method == 'POST':
-            instagram_handle = request.form.get('instagram_handle', '').strip()
-            code = request.form.get('code', '').strip()
+            instagram_handle = sanitize_instagram_handle(request.form.get('instagram_handle', ''))
+            code = sanitize_input(request.form.get('code', ''))
 
             if not instagram_handle or not code:
                 flash('Please enter both Instagram handle and invite code.', 'error')
@@ -278,6 +150,7 @@ def init_app(app):
 
     @app.route('/admin')
     @login_required
+    @limiter.limit("20 per minute")
     def admin():
         if not current_user.is_admin:
             flash('Access denied. Admin privileges required.', 'error')
@@ -297,16 +170,8 @@ def init_app(app):
                 if instagram_url:
                     # Extract caption from Instagram URL
                     caption = extract_caption_from_instagram(instagram_url)
-                    if caption == "USE_ONLY_CODE":
-                        # If we're using only code, we need to get the autograph directly
-                        autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
-                        if autograph:
-                            return render_template('verify.html', 
-                                                success=True,
-                                                autograph=autograph,
-                                                instagram_url=instagram_url)
-                        else:
-                            return render_template('verify.html', error="No autograph found for this URL")
+                    if not caption:
+                        return render_template('verify.html', error="Could not extract caption from URL")
                 
                 print(f"DEBUG: Verifying caption: {caption}")
                 
@@ -429,30 +294,41 @@ def init_app(app):
     @login_required
     def generate_code():
         if request.method == 'POST':
-            instagram_url = request.form.get('instagram_url', '').strip()
-            caption = request.form.get('caption', '').strip()
+            instagram_url = sanitize_url(request.form.get('instagram_url', ''))
+            caption = sanitize_caption(request.form.get('caption', ''))
 
             # Validate Instagram URL
-            url_valid, url_message = validate_instagram_url(instagram_url)
+            url_valid, url_result = validate_instagram_url(instagram_url)
             if not url_valid:
-                flash(url_message, 'error')
+                flash(url_result, 'error')
                 return render_template('generate.html')
 
+            # url_result now contains the post_id
+            post_id = url_result
+
+            # Check if an autograph already exists for this post
+            existing_autograph = Autograph.find_by_instagram_url(f"/p/{post_id}/")
+
+            if existing_autograph:
+                flash('An autograph already exists for this post. Please use the existing one.', 'warning')
+                return redirect(url_for('view_code', id=existing_autograph.id))
+
             # Validate caption
-            caption_valid, caption_message = validate_caption(caption)
+            caption_valid, caption_result = validate_caption(caption)
             if not caption_valid:
-                flash(caption_message, 'error')
+                flash(caption_result, 'error')
                 return render_template('generate.html')
 
             try:
-                # Proceed with existing code for encryption and storage
-                encrypted_caption = encryptor.encrypt(caption)
+                # Create new autograph
+                encrypted_caption = encryptor.encrypt(caption_result)
                 autograph = Autograph(instagram_url=instagram_url, encryption_code=encrypted_caption)
                 db.session.add(autograph)
                 db.session.commit()
                 flash('Autograph generated successfully!', 'success')
                 return redirect(url_for('view_code', id=autograph.id))
             except Exception as e:
+                logger.error(f"Error generating autograph: {e}")
                 db.session.rollback()
                 flash('An error occurred while generating the autograph.', 'error')
                 return render_template('generate.html')
@@ -460,6 +336,7 @@ def init_app(app):
         return render_template('generate.html')
 
     @app.route('/api/generate', methods=['POST'])
+    @limiter.limit("10 per minute")
     def generate_autograph():
         try:
             print("DEBUG: Starting generate_autograph")
@@ -481,12 +358,23 @@ def init_app(app):
                     'message': 'Instagram URL is required'
                 }), 400
             
-            # Get caption from Instagram
-            caption = extract_caption_from_instagram(instagram_url)
-            print(f"DEBUG: Extracted caption: {caption}")
+            # Validate Instagram URL and get post ID
+            url_valid, url_result = validate_instagram_url(instagram_url)
+            if not url_valid:
+                print(f"DEBUG: Invalid URL: {url_result}")
+                return jsonify({
+                    'error': 'Invalid URL',
+                    'message': url_result
+                }), 400
+
+            # url_result contains the post_id
+            post_id = url_result
+            print(f"DEBUG: Extracted post_id: {post_id}")
             
-            # Check if an autograph already exists for this URL
-            existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
+            # Check if an autograph already exists for this post ID
+            existing_autograph = Autograph.query.filter(
+                Autograph.instagram_url.like(f"%/p/{post_id}/%")
+            ).first()
             print(f"DEBUG: Existing autograph check result: {existing_autograph}")
             
             if existing_autograph:
@@ -497,6 +385,10 @@ def init_app(app):
                     'existing_id': existing_autograph.id
                 }), 400
             
+            # Get caption from Instagram
+            caption = extract_caption_from_instagram(instagram_url)
+            print(f"DEBUG: Extracted caption: {caption}")
+            
             # Generate random code
             random_code = generate_random_value()
             print(f"DEBUG: Generated random code: {random_code}")
@@ -505,12 +397,8 @@ def init_app(app):
             invisible_code = encode_to_zero_width(random_code)
             print(f"DEBUG: Converted to invisible code")
             
-            # If caption is "USE_ONLY_CODE", only use the code
-            if caption == "USE_ONLY_CODE":
-                combined_text = invisible_code
-            else:
-                # Combine caption with invisible code
-                combined_text = f"{caption}{invisible_code}"
+            # Combine caption with invisible code
+            combined_text = f"{caption}{invisible_code}"
             print(f"DEBUG: Created combined text")
             
             # Create new autograph
@@ -529,8 +417,7 @@ def init_app(app):
                 'message': 'Autograph generated successfully',
                 'autograph_id': autograph.id,
                 'encrypted_code': random_code,
-                'combined_text': combined_text,
-                'use_only_code': caption == "USE_ONLY_CODE"
+                'combined_text': combined_text
             })
             
         except Exception as e:
@@ -542,12 +429,31 @@ def init_app(app):
             }), 500
 
     @app.route('/encrypt', methods=['POST'])
+    @monitor_performance
     def encrypt():
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'No text provided'}), 400
-        encrypted_text = encryptor.encrypt(data['text'])
-        return jsonify({'encrypted_text': encrypted_text})
+        try:
+            data = request.get_json()
+            if not data or 'text' not in data:
+                capture_security_event(
+                    'invalid_request',
+                    'Missing text in encryption request',
+                    level='warning'
+                )
+                return jsonify({'error': 'Missing text parameter'}), 400
+            
+            encrypted_text = encryptor.encrypt(data['text'])
+            
+            track_user_action('encryption', details={'success': True})
+            return jsonify({'encrypted': encrypted_text})
+            
+        except Exception as e:
+            capture_security_event(
+                'encryption_error',
+                str(e),
+                level='error'
+            )
+            sentry_sdk.capture_exception(e)
+            return jsonify({'error': 'Encryption failed'}), 500
 
     @app.route('/decrypt', methods=['POST'])
     def decrypt():
@@ -560,15 +466,11 @@ def init_app(app):
     @app.route('/api/admin/invite-codes', methods=['GET'])
     @login_required
     def list_invite_codes():
-        print("Accessing list_invite_codes endpoint")
         if not current_user.is_admin:
-            print("Access denied: User is not admin")
             return jsonify({'error': 'Access denied'}), 403
+        
         try:
-            print("Fetching invite codes from database...")
-            codes = InviteCode.query.order_by(InviteCode.created_at.desc()).all()
-            print(f"Found {len(codes)} invite codes")
-            
+            codes = InviteCode.get_all_codes()
             result = []
             for code in codes:
                 try:
@@ -582,30 +484,43 @@ def init_app(app):
                     }
                     result.append(code_data)
                 except Exception as e:
-                    print(f"Error processing code {code.id}: {str(e)}")
+                    logger.error(f"Error processing code {code.id}: {str(e)}")
                     continue
             
-            print("Successfully prepared response")
             return jsonify(result)
         except Exception as e:
-            print(f"Error in list_invite_codes: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error in list_invite_codes: {str(e)}")
             db.session.rollback()
             return jsonify({'error': f'Failed to load invite codes. Error: {str(e)}'}), 500
 
     @app.route('/api/admin/invite-codes', methods=['POST'])
     @login_required
+    @limiter.limit("10 per minute")
     def create_invite_code():
         if not current_user.is_admin:
             return jsonify({'error': 'Access denied'}), 403
+            
         data = request.get_json()
         if not data or 'instagram_handle' not in data:
             return jsonify({'error': 'Instagram handle is required'}), 400
 
-        handle = data['instagram_handle'].strip().lower()
-        if handle.startswith('@'):
-            handle = handle[1:]
+        handle = sanitize_instagram_handle(data['instagram_handle'])
+
+        # Check if user already exists
+        existing_user = InviteCode.find_by_handle(handle)
+        if existing_user:
+            status = "used" if existing_user.is_used else "pending"
+            return jsonify({
+                'error': 'User already exists',
+                'message': f'An invite code for @{handle} already exists and is {status}.',
+                'existing_code': {
+                    'id': existing_user.id,
+                    'code': existing_user.code,
+                    'is_used': existing_user.is_used,
+                    'created_at': existing_user.created_at.isoformat(),
+                    'used_at': existing_user.used_at.isoformat() if existing_user.used_at else None
+                }
+            }), 409
 
         # Generate a unique invite code
         code = 'INV-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -644,3 +559,18 @@ def init_app(app):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/autographs', methods=['GET'])
+    @login_required
+    @limiter.limit("30 per minute")
+    def view_autographs():
+        # Your existing autographs view code...
+        pass
+
+    @app.route('/test-sentry')
+    @monitor_performance
+    def test_sentry():
+        """Test endpoint to verify Sentry error reporting"""
+        raise Exception("This is a test error to verify Sentry is working!")
+
+    return app

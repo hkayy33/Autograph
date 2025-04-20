@@ -1,5 +1,5 @@
 from datetime import datetime
-from WebApp.database import db
+from WebApp.database import db, safe_query, safe_first, safe_all
 from flask_login import UserMixin
 
 class Autograph(db.Model):
@@ -13,6 +13,22 @@ class Autograph(db.Model):
 
     def __repr__(self):
         return f'<Autograph {self.instagram_url[:30]}...>'
+
+    @classmethod
+    def find_by_instagram_url(cls, url):
+        """Safely find an autograph by Instagram URL"""
+        return safe_first(
+            "SELECT * FROM autographs WHERE instagram_url LIKE :url",
+            {"url": f"%{url}%"}
+        )
+
+    @classmethod
+    def find_by_encryption_code(cls, code):
+        """Safely find an autograph by encryption code"""
+        return safe_first(
+            "SELECT * FROM autographs WHERE encryption_code = :code",
+            {"code": code}
+        )
 
 class InviteCode(db.Model, UserMixin):
     __tablename__ = 'invite_codes'
@@ -28,10 +44,18 @@ class InviteCode(db.Model, UserMixin):
 
     @staticmethod
     def authenticate(instagram_handle, code):
-        user = InviteCode.query.filter_by(
-            instagram_handle=instagram_handle.lower().strip(),
-            code=code.strip()
-        ).first()
+        """Safely authenticate a user with their Instagram handle and code"""
+        user = safe_first(
+            """
+            SELECT * FROM invite_codes 
+            WHERE instagram_handle = :handle AND code = :code
+            """,
+            {
+                "handle": instagram_handle.lower().strip(),
+                "code": code.strip()
+            }
+        )
+        
         if user:
             # Update usage tracking but allow reuse
             if not user.is_used:
@@ -40,6 +64,21 @@ class InviteCode(db.Model, UserMixin):
                 db.session.commit()
             return user
         return None
+
+    @classmethod
+    def find_by_handle(cls, handle):
+        """Safely find a user by Instagram handle"""
+        return safe_first(
+            "SELECT * FROM invite_codes WHERE instagram_handle = :handle",
+            {"handle": handle.lower().strip()}
+        )
+
+    @classmethod
+    def get_all_codes(cls):
+        """Safely get all invite codes"""
+        return safe_all(
+            "SELECT * FROM invite_codes ORDER BY created_at DESC"
+        )
 
     @property
     def is_admin(self):
