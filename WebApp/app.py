@@ -9,10 +9,41 @@ import os
 import instaloader
 import secrets
 import logging
+from logging.handlers import RotatingFileHandler
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# Configure logging
+def configure_logging(app):
+    if not app.debug and not app.testing:
+        # Create logs directory if it doesn't exist
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+            
+        # Set up file logging
+        file_handler = RotatingFileHandler('logs/autograph.log', maxBytes=10485760, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        
+        # Set log level
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('Autograph application startup')
+        
+        # Log startup information
+        app.logger.info('Logging system initialized')
+        app.logger.info(f'Running in {"debug" if app.debug else "production"} mode')
+    else:
+        # Set up console logging for development
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        console_handler.setLevel(logging.DEBUG)
+        app.logger.addHandler(console_handler)
+        app.logger.setLevel(logging.DEBUG)
+        
+    return app
 
 # Load environment variables
 load_dotenv()  
@@ -24,6 +55,9 @@ app = Flask(__name__)
 
 # Configure the application
 app.config.from_object(Config)
+
+# Configure application logging
+app = configure_logging(app)
 
 # Initialize the database
 db.init_app(app)
@@ -45,10 +79,9 @@ if not app.debug:
     @app.before_request
     def enforce_https():
         if request.headers.get('X-Forwarded-Proto') == 'http':
-            return redirect(
-                'https://' + request.headers['Host'] + request.full_path, 
-                code=301
-            )
+            url = 'https://' + request.headers['Host'] + request.full_path
+            app.logger.info(f'Redirecting HTTP request to HTTPS: {url}')
+            return redirect(url, code=301)
 
 @app.after_request
 def add_security_headers(response):
@@ -69,7 +102,7 @@ def add_security_headers(response):
 # Global error handlers
 @app.errorhandler(404)
 def page_not_found(e):
-    logger.warning(f"404 Error: {str(e)}")
+    app.logger.warning(f"404 Error: {str(e)}")
     return render_template('error.html', 
                           code=404, 
                           title="Page Not Found", 
@@ -77,7 +110,7 @@ def page_not_found(e):
 
 @app.errorhandler(403)
 def forbidden(e):
-    logger.warning(f"403 Error: {str(e)}")
+    app.logger.warning(f"403 Error: {str(e)}")
     return render_template('error.html', 
                           code=403, 
                           title="Access Denied", 
@@ -85,7 +118,7 @@ def forbidden(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    logger.error(f"500 Error: {str(e)}")
+    app.logger.error(f"500 Error: {str(e)}")
     return render_template('error.html', 
                           code=500, 
                           title="Internal Server Error", 
@@ -93,7 +126,7 @@ def internal_server_error(e):
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    logger.error(f"Unhandled exception: {str(e)}")
+    app.logger.error(f"Unhandled exception: {str(e)}")
     return render_template('error.html',
                           code=500,
                           title="Internal Server Error",
@@ -103,11 +136,11 @@ if __name__ == '__main__':
     with app.app_context():
         try:
             db.create_all()  # Create database tables
-            logger.info("Database tables created successfully")
+            app.logger.info("Database tables created successfully")
         except Exception as e:
-            logger.error(f"Error creating database tables: {e}")
+            app.logger.error(f"Error creating database tables: {e}")
     
     try:
         app.run(host='0.0.0.0', port=5002, debug=True)
     except Exception as e:
-        logger.error(f"Error starting the server: {e}")
+        app.logger.error(f"Error starting the server: {e}")
