@@ -37,8 +37,7 @@ def test_database():
         
         autograph = Autograph(
             instagram_url=test_url,
-            encrypted_code=encrypted_code,
-            raw_code=test_code
+            encryption_code=encrypted_code
         )
         
         try:
@@ -57,7 +56,7 @@ def test_database():
             print(f"Saved record ID: {saved_autograph.id}")
             print(f"Saved Instagram URL: {saved_autograph.instagram_url}")
             
-            decrypted_code = encryptor.decrypt(saved_autograph.encrypted_code)
+            decrypted_code = encryptor.decrypt(saved_autograph.encryption_code)
             print(f"Original code: {test_code}")
             print(f"Decrypted code: {decrypted_code}")
             
@@ -73,11 +72,11 @@ def test_database():
         else:
             print("❌ Failed to retrieve the saved record")
             
-        # Print all records in the database for verification
+        # Print all records in database for verification
         print("\nAll records in database:")
         all_records = Autograph.query.all()
         for record in all_records:
-            print(f"ID: {record.id}, URL: {record.instagram_url}, Raw Code: {record.raw_code}")
+            print(f"ID: {record.id}, URL: {record.instagram_url}")
 
 if __name__ == "__main__":
     test_database()
