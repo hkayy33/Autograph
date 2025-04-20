@@ -10,6 +10,8 @@ import instaloader
 import re
 from .validation import validate_instagram_url, validate_caption, sanitize_input, sanitize_instagram_handle, sanitize_url, sanitize_caption
 from flask_limiter import Limiter
+from .monitoring import monitor_performance, capture_security_event, track_user_action
+import sentry_sdk
 
 # Load environment variables
 load_dotenv()
@@ -427,12 +429,31 @@ def init_app(app, limiter):
             }), 500
 
     @app.route('/encrypt', methods=['POST'])
+    @monitor_performance
     def encrypt():
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'No text provided'}), 400
-        encrypted_text = encryptor.encrypt(data['text'])
-        return jsonify({'encrypted_text': encrypted_text})
+        try:
+            data = request.get_json()
+            if not data or 'text' not in data:
+                capture_security_event(
+                    'invalid_request',
+                    'Missing text in encryption request',
+                    level='warning'
+                )
+                return jsonify({'error': 'Missing text parameter'}), 400
+            
+            encrypted_text = encryptor.encrypt(data['text'])
+            
+            track_user_action('encryption', details={'success': True})
+            return jsonify({'encrypted': encrypted_text})
+            
+        except Exception as e:
+            capture_security_event(
+                'encryption_error',
+                str(e),
+                level='error'
+            )
+            sentry_sdk.capture_exception(e)
+            return jsonify({'error': 'Encryption failed'}), 500
 
     @app.route('/decrypt', methods=['POST'])
     def decrypt():
@@ -545,5 +566,11 @@ def init_app(app, limiter):
     def view_autographs():
         # Your existing autographs view code...
         pass
+
+    @app.route('/test-sentry')
+    @monitor_performance
+    def test_sentry():
+        """Test endpoint to verify Sentry error reporting"""
+        raise Exception("This is a test error to verify Sentry is working!")
 
     return app

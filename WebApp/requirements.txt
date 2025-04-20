@@ -19,4 +19,6 @@ Flask-WTF>=1.1.1
 bcrypt>=4.0.1
 PyJWT>=2.8.0
 urllib3>=2.0.0
-itsdangerous>=2.1.2 
+itsdangerous>=2.1.2
+python-json-logger>=2.0.0
+sentry-sdk[flask]>=1.40.0 

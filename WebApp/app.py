@@ -5,6 +5,7 @@ from WebApp.routes import init_app
 from WebApp.config import Config
 from WebApp.security import configure_security
 from WebApp.database import init_db
+from WebApp.monitoring import setup_monitoring
 from flask_login import LoginManager, current_user, logout_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -13,6 +14,7 @@ import os
 import instaloader
 import secrets
 import logging
+import argparse
 from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
 from flask import flash
@@ -65,6 +67,9 @@ def create_app():
 
     # Load configuration
     app.config.from_object('config.Config')
+    
+    # Initialize monitoring
+    setup_monitoring(app)
     
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
@@ -187,6 +192,11 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Run the Autograph Flask application')
+    parser.add_argument('--port', type=int, default=5001, help='Port to run the application on')
+    args = parser.parse_args()
+    
     with app.app_context():
         try:
             db.create_all()
@@ -202,9 +212,10 @@ if __name__ == '__main__':
         )
         app.logger.info(f"SSL enabled with cert: {ssl_context[0]} and key: {ssl_context[1]}")
     
+    # Use the port from command line arguments
     app.run(
         host='0.0.0.0',
-        port=5001,
+        port=args.port,
         ssl_context=ssl_context,
         debug=app.config['DEBUG']
     )

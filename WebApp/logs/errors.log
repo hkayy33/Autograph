@@ -1,0 +1,19 @@
+[2025-04-21 00:29:55,130] ERROR in app: Unhandled exception: This is a test error to verify Sentry is working!
+Path: /test-sentry
+Method: GET
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: admin
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/monitoring.py", line 156, in decorated_function
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 574, in test_sentry
+    raise Exception("This is a test error to verify Sentry is working!")
+Exception: This is a test error to verify Sentry is working!
