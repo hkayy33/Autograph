@@ -9,6 +9,7 @@ import string
 import instaloader
 import re
 from .validation import validate_instagram_url, validate_caption
+from flask_limiter import Limiter
 
 # Load environment variables
 load_dotenv()
@@ -102,12 +103,13 @@ def extract_post_id(url):
     match = re.search(r'/(p|reel)/([^/?]+)', url)
     return match.group(2) if match else None
 
-def init_app(app):
+def init_app(app, limiter):
     @app.route('/')
     def home():
         return render_template('index.html')
 
     @app.route('/login', methods=['GET', 'POST'])
+    @limiter.limit("5 per minute")
     def login():
         next_page = request.args.get('next')
         
@@ -146,6 +148,7 @@ def init_app(app):
 
     @app.route('/admin')
     @login_required
+    @limiter.limit("20 per minute")
     def admin():
         if not current_user.is_admin:
             flash('Access denied. Admin privileges required.', 'error')
@@ -333,6 +336,7 @@ def init_app(app):
         return render_template('generate.html')
 
     @app.route('/api/generate', methods=['POST'])
+    @limiter.limit("10 per minute")
     def generate_autograph():
         try:
             print("DEBUG: Starting generate_autograph")
@@ -479,6 +483,7 @@ def init_app(app):
 
     @app.route('/api/admin/invite-codes', methods=['POST'])
     @login_required
+    @limiter.limit("10 per minute")
     def create_invite_code():
         if not current_user.is_admin:
             return jsonify({'error': 'Access denied'}), 403
@@ -544,3 +549,12 @@ def init_app(app):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/autographs', methods=['GET'])
+    @login_required
+    @limiter.limit("30 per minute")
+    def view_autographs():
+        # Your existing autographs view code...
+        pass
+
+    return app
