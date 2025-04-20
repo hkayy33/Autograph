@@ -2,6 +2,7 @@ services:
   - type: web
     name: autograph
     env: python
+    rootDir: WebApp
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
@@ -12,4 +13,10 @@ services:
       - key: FLASK_DEBUG
         value: 0
       - key: SSL_ENABLED
-        value: true 
+        value: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SENTRY_DSN
+        value: https://07ce61424d89527953a4214e0d11de94@o4509188028432384.ingest.de.sentry.io/4509188030595152
+    healthCheckPath: /
+    autoDeploy: true 
