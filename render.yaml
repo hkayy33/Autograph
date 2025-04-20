@@ -3,7 +3,7 @@ services:
     name: autograph
     env: python
     buildCommand: pip install -r WebApp/requirements.txt
-    startCommand: cd WebApp && gunicorn --bind 0.0.0.0:$PORT app:app
+    startCommand: cd WebApp && gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
