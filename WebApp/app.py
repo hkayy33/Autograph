@@ -3,6 +3,7 @@ from WebApp.encryption import Encryptor
 from WebApp.models import db, Autograph, InviteCode
 from WebApp.routes import init_app
 from WebApp.config import Config
+from WebApp.security import configure_security
 from flask_login import LoginManager
 from dotenv import load_dotenv
 import os
@@ -58,6 +59,9 @@ app.config.from_object(Config)
 
 # Configure application logging
 app = configure_logging(app)
+
+# Configure security
+app = configure_security(app)
 
 # Initialize the database
 db.init_app(app)

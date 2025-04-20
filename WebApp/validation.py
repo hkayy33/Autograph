@@ -17,8 +17,8 @@ def extract_instagram_post_id(url):
         str: Post ID if found, None otherwise
     """
     try:
-        # Match pattern /p/XXXXXX/ in the URL
-        match = re.search(r'/p/([^/]+)/', url)
+        # Match pattern /p/XXXXXX/ or /reel/XXXXXX/ in the URL
+        match = re.search(r'/(?:p|reel)/([^/]+)/', url)
         if match:
             return match.group(1)
         return None
@@ -27,27 +27,30 @@ def extract_instagram_post_id(url):
         return None
 
 def validate_instagram_url(url):
-    """Validate Instagram URL format and check if it's a valid post URL."""
+    """Validate Instagram URL format and check if it's a valid post/reel URL."""
     if not url:
-        return False, "Please provide an Instagram URL."
+        return False, "Please provide an Instagram URL. Example: https://www.instagram.com/p/ABC123xyz/ or https://www.instagram.com/reel/ABC123xyz/"
+    
+    # Remove @ symbol if present at the start
+    url = url.lstrip('@')
     
     try:
         parsed = urlparse(url)
         if not parsed.netloc.endswith('instagram.com'):
-            return False, "Please provide a valid Instagram URL."
+            return False, "Please provide a valid Instagram URL. Example: https://www.instagram.com/p/ABC123xyz/ or https://www.instagram.com/reel/ABC123xyz/"
         
-        if not re.match(r'^https://.*instagram\.com/p/[^/]+/?.*$', url):
-            return False, "Please provide a valid Instagram post URL."
+        if not re.match(r'^https://.*instagram\.com/(?:p|reel)/[^/]+/?.*$', url):
+            return False, "Please provide a valid Instagram post or reel URL. Examples:\nhttps://www.instagram.com/p/ABC123xyz/\nhttps://www.instagram.com/reel/ABC123xyz/"
             
         post_id = extract_instagram_post_id(url)
         if not post_id:
-            return False, "Could not extract post ID from URL."
+            return False, "Could not extract post ID from URL. Please make sure you're using a direct post or reel URL."
             
         return True, post_id
             
     except Exception as e:
         logger.error(f"Error validating Instagram URL: {e}")
-        return False, "Invalid URL format."
+        return False, "Invalid URL format. Please provide a URL like: https://www.instagram.com/p/ABC123xyz/ or https://www.instagram.com/reel/ABC123xyz/"
 
 def validate_caption(caption):
     """
