@@ -40,6 +40,22 @@ def load_user(user_id):
 # Initialize routes
 init_app(app)
 
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    # Prevent browsers from incorrectly detecting non-scripts as scripts
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Only allow your site to frame itself
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # XSS protection 
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # All resources should come from the app's origin
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://www.instagram.com;"
+    # Set secure cookie attributes
+    if 'Set-Cookie' in response.headers:
+        response.headers['Set-Cookie'] = response.headers['Set-Cookie'] + '; HttpOnly; SameSite=Lax'
+    return response
+
 if __name__ == '__main__':
     with app.app_context():
         try:
