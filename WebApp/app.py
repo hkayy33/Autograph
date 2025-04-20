@@ -66,6 +66,39 @@ def add_security_headers(response):
         response.headers['Set-Cookie'] = response.headers['Set-Cookie'] + '; HttpOnly; SameSite=Lax'
     return response
 
+# Global error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    logger.warning(f"404 Error: {str(e)}")
+    return render_template('error.html', 
+                          code=404, 
+                          title="Page Not Found", 
+                          message="The requested page could not be found."), 404
+
+@app.errorhandler(403)
+def forbidden(e):
+    logger.warning(f"403 Error: {str(e)}")
+    return render_template('error.html', 
+                          code=403, 
+                          title="Access Denied", 
+                          message="You don't have permission to access this resource."), 403
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    logger.error(f"500 Error: {str(e)}")
+    return render_template('error.html', 
+                          code=500, 
+                          title="Internal Server Error", 
+                          message="An unexpected error occurred on our server."), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled exception: {str(e)}")
+    return render_template('error.html',
+                          code=500,
+                          title="Internal Server Error",
+                          message="An unexpected error occurred on our server."), 500
+
 if __name__ == '__main__':
     with app.app_context():
         try:

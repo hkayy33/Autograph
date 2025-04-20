@@ -1,39 +1,53 @@
 import re
 import bleach
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import logging
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-def validate_instagram_url(url):
-    """
-    Validates an Instagram URL:
-    - Must be a valid URL format
-    - Must be from instagram.com domain
-    - Must follow Instagram post URL pattern
-    """
-    if not url:
-        return False, "URL cannot be empty"
+def extract_instagram_post_id(url):
+    """Extract the Instagram post ID from a URL.
+    
+    Args:
+        url (str): Instagram post URL
         
+    Returns:
+        str: Post ID if found, None otherwise
+    """
     try:
-        # Parse URL
+        # Match pattern /p/XXXXXX/ in the URL
+        match = re.search(r'/p/([^/]+)/', url)
+        if match:
+            return match.group(1)
+        return None
+    except Exception as e:
+        logger.error(f"Error extracting Instagram post ID: {e}")
+        return None
+
+def validate_instagram_url(url):
+    """Validate Instagram URL format and check if it's a valid post URL."""
+    if not url:
+        return False, "Please provide an Instagram URL."
+    
+    try:
         parsed = urlparse(url)
-        
-        # Check domain
         if not parsed.netloc.endswith('instagram.com'):
-            return False, "URL must be from instagram.com"
-            
-        # Check URL pattern (instagram.com/p/POSTID or instagram.com/reel/POSTID)
-        pattern = r'^https?://(?:www\.)?instagram\.com/(?:p|reel)/[\w-]+/?$'
-        if not re.match(pattern, url):
-            return False, "Invalid Instagram post URL format"
-            
-        return True, "Valid Instagram URL"
+            return False, "Please provide a valid Instagram URL."
         
-    except Exception:
-        return False, "Invalid URL format"
+        if not re.match(r'^https://.*instagram\.com/p/[^/]+/?.*$', url):
+            return False, "Please provide a valid Instagram post URL."
+            
+        post_id = extract_instagram_post_id(url)
+        if not post_id:
+            return False, "Could not extract post ID from URL."
+            
+        return True, post_id
+            
+    except Exception as e:
+        logger.error(f"Error validating Instagram URL: {e}")
+        return False, "Invalid URL format."
 
 def validate_caption(caption):
     """

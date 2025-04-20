@@ -293,19 +293,31 @@ def init_app(app):
             caption = request.form.get('caption', '').strip()
 
             # Validate Instagram URL
-            url_valid, url_message = validate_instagram_url(instagram_url)
+            url_valid, url_result = validate_instagram_url(instagram_url)
             if not url_valid:
-                flash(url_message, 'error')
+                flash(url_result, 'error')
                 return render_template('generate.html')
 
-            # Validate and sanitize caption
+            # url_result now contains the post_id
+            post_id = url_result
+
+            # Check if an autograph already exists for this post
+            existing_autograph = Autograph.query.filter(
+                Autograph.instagram_url.like(f"%/p/{post_id}/%")
+            ).first()
+
+            if existing_autograph:
+                flash('An autograph already exists for this post. Please use the existing one.', 'warning')
+                return redirect(url_for('view_code', id=existing_autograph.id))
+
+            # Validate caption
             caption_valid, caption_result = validate_caption(caption)
             if not caption_valid:
                 flash(caption_result, 'error')
                 return render_template('generate.html')
 
             try:
-                # Use the sanitized caption
+                # Create new autograph
                 encrypted_caption = encryptor.encrypt(caption_result)
                 autograph = Autograph(instagram_url=instagram_url, encryption_code=encrypted_caption)
                 db.session.add(autograph)
@@ -313,6 +325,7 @@ def init_app(app):
                 flash('Autograph generated successfully!', 'success')
                 return redirect(url_for('view_code', id=autograph.id))
             except Exception as e:
+                logger.error(f"Error generating autograph: {e}")
                 db.session.rollback()
                 flash('An error occurred while generating the autograph.', 'error')
                 return render_template('generate.html')
@@ -341,12 +354,23 @@ def init_app(app):
                     'message': 'Instagram URL is required'
                 }), 400
             
-            # Get caption from Instagram
-            caption = extract_caption_from_instagram(instagram_url)
-            print(f"DEBUG: Extracted caption: {caption}")
+            # Validate Instagram URL and get post ID
+            url_valid, url_result = validate_instagram_url(instagram_url)
+            if not url_valid:
+                print(f"DEBUG: Invalid URL: {url_result}")
+                return jsonify({
+                    'error': 'Invalid URL',
+                    'message': url_result
+                }), 400
+
+            # url_result contains the post_id
+            post_id = url_result
+            print(f"DEBUG: Extracted post_id: {post_id}")
             
-            # Check if an autograph already exists for this URL
-            existing_autograph = Autograph.query.filter_by(instagram_url=instagram_url).first()
+            # Check if an autograph already exists for this post ID
+            existing_autograph = Autograph.query.filter(
+                Autograph.instagram_url.like(f"%/p/{post_id}/%")
+            ).first()
             print(f"DEBUG: Existing autograph check result: {existing_autograph}")
             
             if existing_autograph:
@@ -356,6 +380,10 @@ def init_app(app):
                     'message': 'An autograph has already been generated for this Instagram post',
                     'existing_id': existing_autograph.id
                 }), 400
+            
+            # Get caption from Instagram
+            caption = extract_caption_from_instagram(instagram_url)
+            print(f"DEBUG: Extracted caption: {caption}")
             
             # Generate random code
             random_code = generate_random_value()
@@ -454,6 +482,7 @@ def init_app(app):
     def create_invite_code():
         if not current_user.is_admin:
             return jsonify({'error': 'Access denied'}), 403
+            
         data = request.get_json()
         if not data or 'instagram_handle' not in data:
             return jsonify({'error': 'Instagram handle is required'}), 400
@@ -461,6 +490,22 @@ def init_app(app):
         handle = data['instagram_handle'].strip().lower()
         if handle.startswith('@'):
             handle = handle[1:]
+
+        # Check if user already exists (either used or unused invite code)
+        existing_user = InviteCode.query.filter_by(instagram_handle=handle).first()
+        if existing_user:
+            status = "used" if existing_user.is_used else "pending"
+            return jsonify({
+                'error': 'User already exists',
+                'message': f'An invite code for @{handle} already exists and is {status}.',
+                'existing_code': {
+                    'id': existing_user.id,
+                    'code': existing_user.code,
+                    'is_used': existing_user.is_used,
+                    'created_at': existing_user.created_at.isoformat(),
+                    'used_at': existing_user.used_at.isoformat() if existing_user.used_at else None
+                }
+            }), 409  # HTTP 409 Conflict
 
         # Generate a unique invite code
         code = 'INV-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
