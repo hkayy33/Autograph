@@ -69,8 +69,11 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
     
     # Session configuration
-    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
-    app.config['SESSION_PERMANENT'] = False  # Sessions expire when browser closes
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # 7 days
+    app.config['SESSION_PERMANENT'] = True  # Sessions persist across browser restarts
+    app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
     
     # Initialize the database with the app context
     init_db(app)
@@ -106,8 +109,8 @@ def create_app():
             last_activity = session.get('last_activity')
             now = datetime.utcnow()
             
-            # Set session timeout to 30 minutes
-            session_timeout = timedelta(minutes=30)
+            # Set session timeout to 7 days
+            session_timeout = timedelta(days=7)
             
             if last_activity:
                 last_activity = datetime.fromisoformat(last_activity)
@@ -124,7 +127,7 @@ def create_app():
     # Error handlers
     @app.errorhandler(404)
     def page_not_found(e):
-        app.logger.warning(f"Page not found: {request.path}")
+        app.logger.warning(f"Page not found: {request.path} - IP: {request.remote_addr} - User Agent: {request.user_agent}")
         return render_template('error.html', 
                              code=404, 
                              title="Page Not Found", 
@@ -132,7 +135,7 @@ def create_app():
 
     @app.errorhandler(403)
     def forbidden(e):
-        app.logger.warning(f"Forbidden access: {request.path}")
+        app.logger.warning(f"Forbidden access: {request.path} - IP: {request.remote_addr} - User: {current_user.instagram_handle if current_user.is_authenticated else 'Anonymous'}")
         return render_template('error.html', 
                              code=403, 
                              title="Access Denied", 
@@ -140,7 +143,7 @@ def create_app():
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        app.logger.error(f"Internal Server Error: {str(e)}")
+        app.logger.error(f"Internal Server Error: {str(e)} - Path: {request.path} - IP: {request.remote_addr}", exc_info=True)
         return render_template('error.html', 
                              code=500, 
                              title="Internal Server Error", 
@@ -148,7 +151,7 @@ def create_app():
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
-        app.logger.warning(f"Rate limit exceeded: {request.path}")
+        app.logger.warning(f"Rate limit exceeded: {request.path} - IP: {request.remote_addr} - User: {current_user.instagram_handle if current_user.is_authenticated else 'Anonymous'}")
         return render_template('error.html',
                              code=429,
                              title="Too Many Requests",
@@ -156,11 +159,29 @@ def create_app():
 
     @app.errorhandler(Exception)
     def handle_exception(e):
-        app.logger.error(f"Unhandled exception: {str(e)}")
+        # Log the error with traceback and request details
+        app.logger.error(
+            f"Unhandled exception: {str(e)}\n"
+            f"Path: {request.path}\n"
+            f"Method: {request.method}\n"
+            f"IP: {request.remote_addr}\n"
+            f"User Agent: {request.user_agent}\n"
+            f"User: {current_user.instagram_handle if current_user.is_authenticated else 'Anonymous'}",
+            exc_info=True
+        )
+        
+        # In production, show generic error message
+        if not app.debug:
+            return render_template('error.html',
+                                code=500,
+                                title="Internal Server Error",
+                                message="An unexpected error occurred. Our team has been notified."), 500
+        
+        # In development, show detailed error
         return render_template('error.html',
-                             code=500,
-                             title="Internal Server Error",
-                             message="An unexpected error occurred on our server."), 500
+                            code=500,
+                            title="Internal Server Error",
+                            message=str(e)), 500
 
     # Import and register routes
     import WebApp.routes as routes
