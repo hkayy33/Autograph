@@ -84,14 +84,14 @@ def extract_caption_from_instagram(instagram_url):
             shortcode = post_match.group(1)
             # Load the post using the shortcode
             post = instaloader.Post.from_shortcode(L.context, shortcode)
-            # Return the caption or a default message
-            return post.caption or "No caption found"
+            # Return the caption or empty string if no caption
+            return post.caption or ""
         elif reel_match:
             shortcode = reel_match.group(1)
             # Load the reel using the shortcode
             post = instaloader.Post.from_shortcode(L.context, shortcode)
-            # Return the caption or a default message
-            return post.caption or "No caption found"
+            # Return the caption or empty string if no caption
+            return post.caption or ""
         else:
             return "Invalid Instagram URL format. Please use a post or reel URL."
     except Exception as e:

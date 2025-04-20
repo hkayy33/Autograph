@@ -55,13 +55,13 @@ def validate_instagram_url(url):
 def validate_caption(caption):
     """
     Validates an Instagram caption:
-    - Must not be empty
-    - Must be within length limits
+    - Can be empty
+    - If not empty, must be within length limits
     - Must not contain dangerous HTML/script tags
     - Must only contain allowed special characters
     """
     if not caption:
-        return False, "Caption cannot be empty"
+        return True, ""  # Allow empty captions
         
     if len(caption) > 2200:  # Instagram's caption limit
         return False, "Caption exceeds maximum length of 2200 characters"
