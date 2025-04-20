@@ -2,8 +2,10 @@ services:
   - type: web
     name: autograph
     env: python
-    buildCommand: pip install -r WebApp/requirements.txt
-    startCommand: cd WebApp && gunicorn wsgi:app
+    buildCommand: |
+      pip install -r WebApp/requirements.txt
+      cp -r WebApp/* .
+    startCommand: gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
@@ -19,5 +21,7 @@ services:
         value: https://07ce61424d89527953a4214e0d11de94@o4509188028432384.ingest.de.sentry.io/4509188030595152
       - key: PORT
         value: 10000
+      - key: PYTHONPATH
+        value: .
     healthCheckPath: /
     autoDeploy: true 
