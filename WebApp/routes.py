@@ -8,6 +8,7 @@ import random
 import string
 import instaloader
 import re
+from .validation import validate_instagram_url, validate_caption
 
 # Load environment variables
 load_dotenv()
@@ -288,39 +289,34 @@ def init_app(app):
     @login_required
     def generate_code():
         if request.method == 'POST':
+            instagram_url = request.form.get('instagram_url', '').strip()
+            caption = request.form.get('caption', '').strip()
+
+            # Validate Instagram URL
+            url_valid, url_message = validate_instagram_url(instagram_url)
+            if not url_valid:
+                flash(url_message, 'error')
+                return render_template('generate.html')
+
+            # Validate caption
+            caption_valid, caption_message = validate_caption(caption)
+            if not caption_valid:
+                flash(caption_message, 'error')
+                return render_template('generate.html')
+
             try:
-                instagram_url = request.form['instagram_url']
-                
-                # Get caption from Instagram
-                caption = extract_caption_from_instagram(instagram_url)
-                if not caption or caption == "Error fetching caption. Make sure the URL is for a public post or reel.":
-                    return render_template('generate.html', error="Could not fetch caption. Please make sure the URL is correct and the post is public.")
-                
-                # Generate autograph
-                random_code = generate_random_value()
-                
-                # Convert autograph to zero-width characters
-                invisible_code = encode_to_zero_width(random_code)
-                
-                # Combine caption with invisible code
-                combined_text = f"{caption}{invisible_code}"
-                
-                # Store in database
-                new_record = Autograph(
-                    instagram_url=instagram_url,
-                    encryption_code=random_code
-                )
-                db.session.add(new_record)
+                # Proceed with existing code for encryption and storage
+                encrypted_caption = encryptor.encrypt(caption)
+                autograph = Autograph(instagram_url=instagram_url, encryption_code=encrypted_caption)
+                db.session.add(autograph)
                 db.session.commit()
-                
-                return render_template('result.html', 
-                                    instagram_url=instagram_url, 
-                                    encrypted_code=random_code,
-                                    combined_text=combined_text)
+                flash('Autograph generated successfully!', 'success')
+                return redirect(url_for('view_code', id=autograph.id))
             except Exception as e:
-                print(f"Error generating autograph: {str(e)}")
-                return render_template('generate.html', error=f"An error occurred: {str(e)}")
-        
+                db.session.rollback()
+                flash('An error occurred while generating the autograph.', 'error')
+                return render_template('generate.html')
+
         return render_template('generate.html')
 
     @app.route('/api/generate', methods=['POST'])
