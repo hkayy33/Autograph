@@ -4,6 +4,7 @@ from WebApp.models import db, Autograph, InviteCode
 from WebApp.routes import init_app
 from WebApp.config import Config
 from WebApp.security import configure_security
+from WebApp.database import init_db
 from flask_login import LoginManager, current_user, logout_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -12,137 +13,173 @@ import os
 import instaloader
 import secrets
 import logging
-import logging.handlers
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
 from flask import flash
+from flask_migrate import Migrate
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Configure file logging if not in debug mode
-if not os.getenv('FLASK_DEBUG', '0') == '1':
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    file_handler = logging.handlers.RotatingFileHandler(
-        'logs/autograph.log', maxBytes=10485760, backupCount=5)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-    logger.info('Production logging configured')
-
-# Load environment variables
-load_dotenv()  
-encryption_key = os.getenv('ENCRYPTION_KEY')
-encryptor = Encryptor(encryption_key)
-
-# Create the Flask application instance
-app = Flask(__name__)
-
-# Configure the application
-app.config.from_object(Config)
-
-# Initialize rate limiter
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
-)
-limiter.init_app(app)
-logger.info('Rate limiter initialized')
-
-# Configure security features
-configure_security(app)
-logger.info('Security features configured')
-
-# Initialize the database
-db.init_app(app)
-
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-@login_manager.user_loader
-def load_user(user_id):
-    return InviteCode.query.get(int(user_id))
-
-# Global error handlers
-@app.errorhandler(404)
-def page_not_found(e):
-    logger.warning(f"Page not found: {request.path}")
-    return render_template('error.html', 
-                         code=404, 
-                         title="Page Not Found", 
-                         message="The requested page could not be found."), 404
-
-@app.errorhandler(403)
-def forbidden(e):
-    logger.warning(f"Forbidden access: {request.path}")
-    return render_template('error.html', 
-                         code=403, 
-                         title="Access Denied", 
-                         message="You don't have permission to access this resource."), 403
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    logger.error(f"Internal Server Error: {str(e)}")
-    return render_template('error.html', 
-                         code=500, 
-                         title="Internal Server Error", 
-                         message="An unexpected error occurred on our server."), 500
-
-@app.errorhandler(429)
-def ratelimit_handler(e):
-    logger.warning(f"Rate limit exceeded: {request.path}")
-    return render_template('error.html',
-                         code=429,
-                         title="Too Many Requests",
-                         message="You have exceeded the rate limit. Please try again later."), 429
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    logger.error(f"Unhandled exception: {str(e)}")
-    return render_template('error.html',
-                         code=500,
-                         title="Internal Server Error",
-                         message="An unexpected error occurred on our server."), 500
-
-# Initialize routes with rate limiter
-init_app(app, limiter)
-
-@app.before_request
-def check_session_timeout():
-    """Check for session timeout"""
-    if current_user.is_authenticated:
-        # Get the last activity time from the session
-        last_activity = session.get('last_activity')
-        now = datetime.utcnow()
+def configure_logging(app):
+    """Configure application logging"""
+    if not app.debug and not app.testing:
+        # Ensure log directory exists
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
         
-        # Set session timeout to 30 minutes
-        session_timeout = timedelta(minutes=30)
+        # File Handler - for general logging
+        file_handler = RotatingFileHandler(
+            'logs/autograph.log', 
+            maxBytes=10485760,  # 10MB
+            backupCount=10
+        )
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
         
-        if last_activity:
-            last_activity = datetime.fromisoformat(last_activity)
-            # If last activity is older than timeout, log out user
-            if now - last_activity > session_timeout:
-                logout_user()
-                flash('Your session has expired. Please log in again.', 'warning')
-                return redirect(url_for('login'))
+        # Error File Handler - for errors only
+        error_file_handler = RotatingFileHandler(
+            'logs/errors.log',
+            maxBytes=10485760,
+            backupCount=10
+        )
+        error_file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        error_file_handler.setLevel(logging.ERROR)
+        app.logger.addHandler(error_file_handler)
         
-        # Update last activity time
-        session['last_activity'] = now.isoformat()
+        # Set overall log level
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('Autograph application startup')
+    
+    return app
+
+def create_app():
+    """Application factory function"""
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Create the Flask application instance
+    app = Flask(__name__)
+
+    # Configure the application
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+    
+    # Session configuration
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+    app.config['SESSION_PERMANENT'] = False  # Sessions expire when browser closes
+    
+    # Initialize the database with the app context
+    init_db(app)
+    
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
+
+    # Initialize rate limiter
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://"
+    )
+    limiter.init_app(app)
+
+    # Configure logging
+    configure_logging(app)
+
+    # Initialize Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return InviteCode.query.get(int(user_id))
+
+    @app.before_request
+    def check_session_timeout():
+        """Check for session timeout"""
+        if current_user.is_authenticated:
+            # Get the last activity time from the session
+            last_activity = session.get('last_activity')
+            now = datetime.utcnow()
+            
+            # Set session timeout to 30 minutes
+            session_timeout = timedelta(minutes=30)
+            
+            if last_activity:
+                last_activity = datetime.fromisoformat(last_activity)
+                # If last activity is older than timeout, log out user
+                if now - last_activity > session_timeout:
+                    app.logger.warning(f'Session expired for user {current_user.instagram_handle}')
+                    logout_user()
+                    flash('Your session has expired. Please log in again.', 'warning')
+                    return redirect(url_for('login'))
+            
+            # Update last activity time
+            session['last_activity'] = now.isoformat()
+
+    # Error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        app.logger.warning(f"Page not found: {request.path}")
+        return render_template('error.html', 
+                             code=404, 
+                             title="Page Not Found", 
+                             message="The requested page could not be found."), 404
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        app.logger.warning(f"Forbidden access: {request.path}")
+        return render_template('error.html', 
+                             code=403, 
+                             title="Access Denied", 
+                             message="You don't have permission to access this resource."), 403
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.error(f"Internal Server Error: {str(e)}")
+        return render_template('error.html', 
+                             code=500, 
+                             title="Internal Server Error", 
+                             message="An unexpected error occurred on our server."), 500
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        app.logger.warning(f"Rate limit exceeded: {request.path}")
+        return render_template('error.html',
+                             code=429,
+                             title="Too Many Requests",
+                             message="You have exceeded the rate limit. Please try again later."), 429
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.error(f"Unhandled exception: {str(e)}")
+        return render_template('error.html',
+                             code=500,
+                             title="Internal Server Error",
+                             message="An unexpected error occurred on our server."), 500
+
+    # Import and register routes
+    import WebApp.routes as routes
+    routes.init_app(app, limiter)
+
+    return app
+
+# Create the application instance
+app = create_app()
 
 if __name__ == '__main__':
     with app.app_context():
         try:
             db.create_all()
-            logger.info("Database tables created successfully")
+            app.logger.info("Database tables created successfully")
         except Exception as e:
-            logger.error(f"Error creating database tables: {e}")
+            app.logger.error(f"Error creating database tables: {e}")
     
     try:
         app.run(host='0.0.0.0', port=5002, debug=True)
     except Exception as e:
-        logger.error(f"Error starting the server: {e}")
+        app.logger.error(f"Error starting the server: {e}")
