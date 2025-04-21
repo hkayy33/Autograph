@@ -3,9 +3,13 @@ services:
     name: autograph
     env: python
     buildCommand: |
-      pip install -r WebApp/requirements.txt
-      cp -r WebApp/* .
-    startCommand: gunicorn wsgi:app
+      python -m pip install -r WebApp/requirements.txt
+      mkdir -p /opt/render/project/src/WebApp
+      cp -r WebApp/* /opt/render/project/src/WebApp/
+      export PYTHONPATH=/opt/render/project/src
+    startCommand: |
+      cd /opt/render/project/src/WebApp
+      gunicorn --chdir /opt/render/project/src/WebApp wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
@@ -22,6 +26,6 @@ services:
       - key: PORT
         value: 10000
       - key: PYTHONPATH
-        value: .
+        value: /opt/render/project/src
     healthCheckPath: /
     autoDeploy: true 

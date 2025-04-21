@@ -23,3 +23,5 @@
 {"asctime": "2025-04-21 00:47:50,036", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
 {"asctime": "2025-04-21 00:56:39,570", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
 {"asctime": "2025-04-21 00:56:39,570", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 01:01:13,362", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 01:01:13,362", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
