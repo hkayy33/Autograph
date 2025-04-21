@@ -42,19 +42,22 @@ class InviteCode(db.Model, UserMixin):
     def get_id(self):
         return str(self.id)
 
+    @property
+    def is_active(self):
+        """Required by Flask-Login, determines if this is an active user"""
+        return True  # All invite codes are considered active users
+
+    @property
+    def is_admin(self):
+        return self.instagram_handle.lower() == 'admin'
+
     @staticmethod
     def authenticate(instagram_handle, code):
         """Safely authenticate a user with their Instagram handle and code"""
-        user = safe_first(
-            """
-            SELECT * FROM invite_codes 
-            WHERE instagram_handle = :handle AND code = :code
-            """,
-            {
-                "handle": instagram_handle.lower().strip(),
-                "code": code.strip()
-            }
-        )
+        user = InviteCode.query.filter_by(
+            instagram_handle=instagram_handle.lower().strip(),
+            code=code.strip()
+        ).first()
         
         if user:
             # Update usage tracking but allow reuse
@@ -68,20 +71,13 @@ class InviteCode(db.Model, UserMixin):
     @classmethod
     def find_by_handle(cls, handle):
         """Safely find a user by Instagram handle"""
-        return safe_first(
-            "SELECT * FROM invite_codes WHERE instagram_handle = :handle",
-            {"handle": handle.lower().strip()}
-        )
+        return cls.query.filter_by(
+            instagram_handle=handle.lower().strip()
+        ).first()
 
     @classmethod
     def get_all_codes(cls):
         """Safely get all invite codes"""
-        return safe_all(
-            "SELECT * FROM invite_codes ORDER BY created_at DESC"
-        )
-
-    @property
-    def is_admin(self):
-        return self.instagram_handle.lower() == 'admin'
+        return cls.query.order_by(cls.created_at.desc()).all()
     
     

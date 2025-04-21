@@ -17,3 +17,135 @@ Traceback (most recent call last):
   File "/Users/hassan/Autograph/WebApp/routes.py", line 574, in test_sentry
     raise Exception("This is a test error to verify Sentry is working!")
 Exception: This is a test error to verify Sentry is working!
+[2025-04-21 01:15:12,387] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
+[2025-04-21 01:15:19,689] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
+[2025-04-21 01:17:00,171] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
+[2025-04-21 01:17:54,181] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
+[2025-04-21 01:18:02,182] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
+[2025-04-21 01:18:23,964] ERROR in app: Unhandled exception: Could not locate column in row for column 'is_active'
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1513, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 1499, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1117, in __inner
+    R, flask.current_app.ensure_sync(cast(Callable[P, R], obj))(*a, **k)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 133, in login
+    login_user(user, remember=True)
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_login/utils.py", line 166, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: Could not locate column in row for column 'is_active'
