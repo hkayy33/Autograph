@@ -4,12 +4,8 @@ services:
     env: python
     buildCommand: |
       python -m pip install -r WebApp/requirements.txt
-      mkdir -p /opt/render/project/src/WebApp
-      cp -r WebApp/* /opt/render/project/src/WebApp/
-      export PYTHONPATH=/opt/render/project/src
-    startCommand: |
-      cd /opt/render/project/src/WebApp
-      gunicorn --chdir /opt/render/project/src/WebApp wsgi:app
+      cp -r WebApp/* .
+    startCommand: gunicorn wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.12
@@ -25,7 +21,5 @@ services:
         value: https://07ce61424d89527953a4214e0d11de94@o4509188028432384.ingest.de.sentry.io/4509188030595152
       - key: PORT
         value: 10000
-      - key: PYTHONPATH
-        value: /opt/render/project/src
     healthCheckPath: /
     autoDeploy: true 
