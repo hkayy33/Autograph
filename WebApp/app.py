@@ -195,27 +195,25 @@ if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run the Autograph Flask application')
     parser.add_argument('--port', type=int, default=5001, help='Port to run the application on')
+    parser.add_argument('--cert', type=str, help='Path to SSL certificate file')
+    parser.add_argument('--key', type=str, help='Path to SSL private key file')
     args = parser.parse_args()
     
     with app.app_context():
-        try:
-            db.create_all()
-            app.logger.info("Database tables created successfully")
-        except Exception as e:
-            app.logger.error(f"Error creating database tables: {str(e)}", exc_info=True)
-    
-    ssl_context = None
-    if app.config.get('SSL_ENABLED', False):
-        ssl_context = (
-            app.config.get('SSL_CERT_PATH'),
-            app.config.get('SSL_KEY_PATH')
+        # Create database tables
+        db.create_all()
+        app.logger.info("Database tables created successfully")
+        
+        # Configure SSL if certificates are provided
+        ssl_context = None
+        if args.cert and args.key:
+            ssl_context = (args.cert, args.key)
+            app.logger.info(f"SSL enabled with cert: {args.cert} and key: {args.key}")
+        
+        # Run the application
+        app.run(
+            host='0.0.0.0',
+            port=args.port,
+            ssl_context=ssl_context,
+            debug=True  # Set to False in production
         )
-        app.logger.info(f"SSL enabled with cert: {ssl_context[0]} and key: {ssl_context[1]}")
-    
-    # Use the port from command line arguments
-    app.run(
-        host='0.0.0.0',
-        port=args.port,
-        ssl_context=ssl_context,
-        debug=app.config['DEBUG']
-    )

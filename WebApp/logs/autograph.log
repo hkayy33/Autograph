@@ -77,3 +77,13 @@
 {"asctime": "2025-04-21 01:20:20,438", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
 {"asctime": "2025-04-21 01:20:20,860", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
 {"asctime": "2025-04-21 01:20:20,860", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 18:01:42,046", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:01:42,047", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/cert.pem and key: /Users/hassan/Autograph/WebApp/key.pem"}
+{"asctime": "2025-04-21 18:02:44,585", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:02:44,585", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/cert.pem and key: /Users/hassan/Autograph/WebApp/key.pem"}
+{"asctime": "2025-04-21 18:02:45,023", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:02:45,023", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/cert.pem and key: /Users/hassan/Autograph/WebApp/key.pem"}
+{"asctime": "2025-04-21 18:06:08,311", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:06:08,311", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:06:08,742", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:06:08,742", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
