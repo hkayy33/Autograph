@@ -27,3 +27,12 @@
 {"asctime": "2025-04-21 01:01:13,362", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
 {"asctime": "2025-04-21 01:03:14,723", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
 {"asctime": "2025-04-21 01:03:14,724", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 01:05:41,736", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 01:05:41,736", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 01:05:42,149", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 01:05:42,149", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 01:06:02,758", "levelname": "WARNING", "name": "app", "message": "Page not found: /favicon.ico - IP: 127.0.0.1 - User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15"}
+{"asctime": "2025-04-21 01:06:25,704", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 01:06:25,705", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
+{"asctime": "2025-04-21 01:06:26,126", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 01:06:26,127", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: /Users/hassan/Autograph/WebApp/certs/cert.pem and key: /Users/hassan/Autograph/WebApp/certs/key.pem"}
