@@ -2,10 +2,14 @@ import requests
 import time
 import random
 from datetime import datetime
+import os
+
+# Get the absolute path to the certificates
+CERT_PATH = os.path.join(os.path.dirname(__file__), 'certs', 'cert.pem')
 
 def test_monitoring():
     """Test various monitoring scenarios"""
-    base_url = "https://localhost:5001"  # Use HTTPS since SSL is enabled
+    base_url = "https://localhost:5002"  # Updated port to match server
     
     print("\n=== Testing Sentry Monitoring ===\n")
     
@@ -22,7 +26,8 @@ def test_monitoring():
     response = requests.post(
         f"{base_url}/encrypt",
         json={"text": "test message"},
-        verify=False  # For self-signed cert
+        verify=CERT_PATH,  # Use our development certificate
+        timeout=30  # Added timeout
     )
     log_test("Normal Encryption", response)
     
@@ -31,7 +36,8 @@ def test_monitoring():
     response = requests.post(
         f"{base_url}/encrypt",
         json={"text": "slow test message"},
-        verify=False
+        verify=CERT_PATH,
+        timeout=30  # Added timeout
     )
     log_test("Slow Operation", response)
     
@@ -42,7 +48,8 @@ def test_monitoring():
     response = requests.post(
         f"{base_url}/encrypt",
         json={},  # Missing required field
-        verify=False
+        verify=CERT_PATH,
+        timeout=30  # Added timeout
     )
     log_test("Invalid Request", response)
     
@@ -56,7 +63,8 @@ def test_monitoring():
             "instagram_handle": "test_user",
             "code": "invalid_code"
         },
-        verify=False
+        verify=CERT_PATH,
+        timeout=30  # Added timeout
     )
     log_test("Authentication Failure", response)
     
@@ -71,7 +79,8 @@ def test_monitoring():
                 "instagram_handle": f"test_user_{i}",
                 "code": "test_code"
             },
-            verify=False
+            verify=CERT_PATH,
+            timeout=30  # Added timeout
         )
         if response.status_code == 429:  # Rate limit reached
             print("✅ Rate limiting working as expected")
@@ -86,7 +95,8 @@ def test_monitoring():
         json={
             "instagram_url": "https://instagram.com/p/invalid"
         },
-        verify=False
+        verify=CERT_PATH,
+        timeout=30  # Added timeout
     )
     log_test("Database Error", response)
     

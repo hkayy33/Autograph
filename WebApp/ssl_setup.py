@@ -1,6 +1,8 @@
 import subprocess
 import os
 from pathlib import Path
+import tempfile
+import stat
 
 def install_certbot():
     """Install certbot using brew on macOS"""
@@ -58,14 +60,16 @@ def setup_auto_renewal():
     try:
         # Add cron job for automatic renewal
         cron_cmd = '0 0 1 * * certbot renew --quiet'
-        with open('/tmp/certbot_cron', 'w') as f:
-            f.write(cron_cmd + '\n')
         
-        subprocess.run(['sudo', 'crontab', '/tmp/certbot_cron'], check=True)
-        os.remove('/tmp/certbot_cron')
+        # Create a secure temporary file
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            # Set secure permissions (600)
+            os.chmod(temp_file.name, stat.S_IRUSR | stat.S_IWUSR)
+            temp_file.write(cron_cmd + '\n')
+            temp_path = temp_file.name
         
-        print("Automatic certificate renewal configured")
-        return True
+        subprocess.run(['sudo', 'crontab', temp_path], check=True)
+        print("Auto-renewal cron job installed successfully")
     except Exception as e:
         print(f"Error setting up auto-renewal: {e}")
         return False

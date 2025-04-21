@@ -87,3 +87,20 @@
 {"asctime": "2025-04-21 18:06:08,311", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
 {"asctime": "2025-04-21 18:06:08,742", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
 {"asctime": "2025-04-21 18:06:08,742", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:33:38,770", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:33:38,771", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:37:09,188", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:37:09,697", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:37:56,729", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:38:16,067", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:38:16,067", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:38:16,586", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:38:16,586", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:40:18,357", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:40:18,593", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:40:18,594", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:47:13,314", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:47:13,314", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:47:13,314", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-21 18:49:57,515", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-21 18:49:57,515", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}

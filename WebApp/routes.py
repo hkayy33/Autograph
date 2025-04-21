@@ -439,12 +439,12 @@ def init_app(app, limiter):
                     'Missing text in encryption request',
                     level='warning'
                 )
-                return jsonify({'error': 'Missing text parameter'}), 400
+                return jsonify({'error': 'No text provided'}), 400
             
             encrypted_text = encryptor.encrypt(data['text'])
             
             track_user_action('encryption', details={'success': True})
-            return jsonify({'encrypted': encrypted_text})
+            return jsonify({'encrypted_text': encrypted_text})
             
         except Exception as e:
             capture_security_event(

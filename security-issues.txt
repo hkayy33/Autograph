@@ -1,0 +1,515 @@
+Run started:2025-04-21 17:13:07.849410
+
+Test results:
+>> Issue: [B201:flask_debug_true] A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.
+   Severity: High   Confidence: Medium
+   CWE: CWE-94 (https://cwe.mitre.org/data/definitions/94.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b201_flask_debug_true.html
+   Location: WebApp/app.py:218:8
+217	            ssl_context=ssl_context,
+218	            debug=True  # Set to False in production
+219	        )
+
+--------------------------------------------------
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: WebApp/app.py:215:17
+214	        app.run(
+215	            host='0.0.0.0',
+216	            port=args.port,
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: WebApp/backup.py:4:0
+3	import os
+4	import subprocess
+5	import datetime
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: ''
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b105_hardcoded_password_string.html
+   Location: WebApp/backup.py:54:22
+53	            db_user = ''
+54	            db_pass = ''
+55	        
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: WebApp/backup.py:78:17
+77	        logger.info(f"Creating database backup: {backup_file}")
+78	        result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+79	        
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_calls.html#b311-random
+   Location: WebApp/routes.py:23:19
+22	    """Generate a random string of specified length"""
+23	    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+24	
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_calls.html#b311-random
+   Location: WebApp/routes.py:526:32
+525	        # Generate a unique invite code
+526	        code = 'INV-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+527	        
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: WebApp/ssl_setup.py:1:0
+1	import subprocess
+2	import os
+3	from pathlib import Path
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b607_start_process_with_partial_path.html
+   Location: WebApp/ssl_setup.py:9:8
+8	        # Check if certbot is installed
+9	        subprocess.run(['certbot', '--version'], capture_output=True)
+10	        print("Certbot is already installed")
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: WebApp/ssl_setup.py:9:8
+8	        # Check if certbot is installed
+9	        subprocess.run(['certbot', '--version'], capture_output=True)
+10	        print("Certbot is already installed")
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b607_start_process_with_partial_path.html
+   Location: WebApp/ssl_setup.py:14:12
+13	        try:
+14	            subprocess.run(['brew', 'install', 'certbot'], check=True)
+15	            print("Certbot installed successfully")
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: WebApp/ssl_setup.py:14:12
+13	        try:
+14	            subprocess.run(['brew', 'install', 'certbot'], check=True)
+15	            print("Certbot installed successfully")
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: WebApp/ssl_setup.py:43:8
+42	        
+43	        subprocess.run(cmd, check=True)
+44	        print(f"SSL certificate obtained successfully for {domain}")
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b108_hardcoded_tmp_directory.html
+   Location: WebApp/ssl_setup.py:61:18
+60	        cron_cmd = '0 0 1 * * certbot renew --quiet'
+61	        with open('/tmp/certbot_cron', 'w') as f:
+62	            f.write(cron_cmd + '\n')
+
+--------------------------------------------------
+>> Issue: [B607:start_process_with_partial_path] Starting a process with a partial executable path
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b607_start_process_with_partial_path.html
+   Location: WebApp/ssl_setup.py:64:8
+63	        
+64	        subprocess.run(['sudo', 'crontab', '/tmp/certbot_cron'], check=True)
+65	        os.remove('/tmp/certbot_cron')
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: WebApp/ssl_setup.py:64:8
+63	        
+64	        subprocess.run(['sudo', 'crontab', '/tmp/certbot_cron'], check=True)
+65	        os.remove('/tmp/certbot_cron')
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b108_hardcoded_tmp_directory.html
+   Location: WebApp/ssl_setup.py:64:43
+63	        
+64	        subprocess.run(['sudo', 'crontab', '/tmp/certbot_cron'], check=True)
+65	        os.remove('/tmp/certbot_cron')
+
+--------------------------------------------------
+>> Issue: [B108:hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-377 (https://cwe.mitre.org/data/definitions/377.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b108_hardcoded_tmp_directory.html
+   Location: WebApp/ssl_setup.py:65:18
+64	        subprocess.run(['sudo', 'crontab', '/tmp/certbot_cron'], check=True)
+65	        os.remove('/tmp/certbot_cron')
+66	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:22:4
+21	    # Check response status code
+22	    assert response.status_code == 200
+23	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:26:4
+25	    data = json.loads(response.data)
+26	    assert 'encrypted_text' in data
+27	    assert isinstance(data['encrypted_text'], str)
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:27:4
+26	    assert 'encrypted_text' in data
+27	    assert isinstance(data['encrypted_text'], str)
+28	    assert len(data['encrypted_text']) > 0
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:28:4
+27	    assert isinstance(data['encrypted_text'], str)
+28	    assert len(data['encrypted_text']) > 0
+29	
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:45:4
+44	    # Check response status code
+45	    assert decrypt_response.status_code == 200
+46	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:49:4
+48	    data = json.loads(decrypt_response.data)
+49	    assert 'decrypted_text' in data
+50	    assert data['decrypted_text'] == test_data['text']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:50:4
+49	    assert 'decrypted_text' in data
+50	    assert data['decrypted_text'] == test_data['text']
+51	
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:60:4
+59	    # Check response status code
+60	    assert response.status_code == 400
+61	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:64:4
+63	    data = json.loads(response.data)
+64	    assert 'error' in data
+65	    assert data['error'] == 'No text provided'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:65:4
+64	    assert 'error' in data
+65	    assert data['error'] == 'No text provided'
+66	
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:75:4
+74	    # Check response status code
+75	    assert response.status_code == 400
+76	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:79:4
+78	    data = json.loads(response.data)
+79	    assert 'error' in data
+80	    assert data['error'] == 'No text provided'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: WebApp/test_api.py:80:4
+79	    assert 'error' in data
+80	    assert data['error'] == 'No text provided'
+81	
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:25:15
+24	        json={"text": "test message"},
+25	        verify=False  # For self-signed cert
+26	    )
+27	    log_test("Normal Encryption", response)
+28	    
+29	    # Slow operation simulation
+30	    time.sleep(2.1)  # Trigger slow operation alert
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:22:15
+21	    # Normal encryption
+22	    response = requests.post(
+23	        f"{base_url}/encrypt",
+24	        json={"text": "test message"},
+25	        verify=False  # For self-signed cert
+26	    )
+27	    log_test("Normal Encryption", response)
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:34:15
+33	        json={"text": "slow test message"},
+34	        verify=False
+35	    )
+36	    log_test("Slow Operation", response)
+37	    
+38	    # 2. Test Error Tracking
+39	    print("\n2. Testing Error Tracking")
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:31:15
+30	    time.sleep(2.1)  # Trigger slow operation alert
+31	    response = requests.post(
+32	        f"{base_url}/encrypt",
+33	        json={"text": "slow test message"},
+34	        verify=False
+35	    )
+36	    log_test("Slow Operation", response)
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:45:15
+44	        json={},  # Missing required field
+45	        verify=False
+46	    )
+47	    log_test("Invalid Request", response)
+48	    
+49	    # 3. Test Security Events
+50	    print("\n3. Testing Security Events")
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:42:15
+41	    # Invalid request
+42	    response = requests.post(
+43	        f"{base_url}/encrypt",
+44	        json={},  # Missing required field
+45	        verify=False
+46	    )
+47	    log_test("Invalid Request", response)
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:59:15
+58	        },
+59	        verify=False
+60	    )
+61	    log_test("Authentication Failure", response)
+62	    
+63	    # 4. Test Rate Limiting
+64	    print("\n4. Testing Rate Limiting")
+65	    
+66	    # Make multiple rapid requests
+67	    for i in range(6):  # Should trigger rate limit
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:53:15
+52	    # Authentication failure
+53	    response = requests.post(
+54	        f"{base_url}/login",
+55	        json={
+56	            "instagram_handle": "test_user",
+57	            "code": "invalid_code"
+58	        },
+59	        verify=False
+60	    )
+61	    log_test("Authentication Failure", response)
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:74:19
+73	            },
+74	            verify=False
+75	        )
+76	        if response.status_code == 429:  # Rate limit reached
+77	            print("✅ Rate limiting working as expected")
+78	            break
+79	    
+80	    # 5. Test Database Error Tracking
+81	    print("\n5. Testing Database Error Tracking")
+82	    
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:68:19
+67	    for i in range(6):  # Should trigger rate limit
+68	        response = requests.post(
+69	            f"{base_url}/login",
+70	            json={
+71	                "instagram_handle": f"test_user_{i}",
+72	                "code": "test_code"
+73	            },
+74	            verify=False
+75	        )
+76	        if response.status_code == 429:  # Rate limit reached
+
+--------------------------------------------------
+>> Issue: [B501:request_with_no_cert_validation] Call to requests with verify=False disabling SSL certificate checks, security issue.
+   Severity: High   Confidence: High
+   CWE: CWE-295 (https://cwe.mitre.org/data/definitions/295.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b501_request_with_no_cert_validation.html
+   Location: WebApp/test_monitoring.py:89:15
+88	        },
+89	        verify=False
+90	    )
+91	    log_test("Database Error", response)
+92	    
+93	    print("\nTest completed. Check Sentry dashboard for alerts and events.")
+94	    print("Note: Some 'failures' above are expected as they test error handling.")
+95	
+96	if __name__ == "__main__":
+
+--------------------------------------------------
+>> Issue: [B113:request_without_timeout] Call to requests without timeout
+   Severity: Medium   Confidence: Low
+   CWE: CWE-400 (https://cwe.mitre.org/data/definitions/400.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b113_request_without_timeout.html
+   Location: WebApp/test_monitoring.py:84:15
+83	    # Invalid database operation
+84	    response = requests.post(
+85	        f"{base_url}/api/generate",
+86	        json={
+87	            "instagram_url": "https://instagram.com/p/invalid"
+88	        },
+89	        verify=False
+90	    )
+91	    log_test("Database Error", response)
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 1542
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 26
+		Medium: 10
+		High: 7
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 6
+		Medium: 6
+		High: 31
+Files skipped (0):
