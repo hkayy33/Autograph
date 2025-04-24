@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, s
 from WebApp.encryption import Encryptor
 from WebApp.models import db, Autograph, InviteCode
 from WebApp.routes import init_app
-from WebApp.config import Config
+from WebApp.config import config
 from WebApp.security import configure_security
 from WebApp.database import init_db
 from WebApp.monitoring import setup_monitoring
@@ -66,7 +66,7 @@ def create_app():
     app = Flask(__name__)
 
     # Load configuration
-    app.config.from_object('config.Config')
+    app.config.from_object('WebApp.config.config.Config')
     
     # Initialize monitoring
     setup_monitoring(app)
@@ -82,11 +82,10 @@ def create_app():
 
     # Initialize rate limiter
     limiter = Limiter(
+        app=app,
         key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
-        storage_uri="memory://"
+        default_limits=["200 per day", "50 per hour"]
     )
-    limiter.init_app(app)
 
     # Configure logging
     configure_logging(app)

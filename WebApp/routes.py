@@ -113,13 +113,10 @@ def init_app(app, limiter):
     @app.route('/login', methods=['GET', 'POST'])
     @limiter.limit("10 per minute")
     def login():
+        if current_user.is_authenticated:
+            return redirect(url_for('home'))
         next_page = request.args.get('next')
         
-        if current_user.is_authenticated:
-            if current_user.is_admin:
-                return redirect(url_for('admin'))
-            return redirect(next_page or url_for('generate_code'))
-
         if request.method == 'POST':
             instagram_handle = sanitize_instagram_handle(request.form.get('instagram_handle', ''))
             code = sanitize_input(request.form.get('code', ''))
@@ -153,8 +150,7 @@ def init_app(app, limiter):
     @limiter.limit("20 per minute")
     def admin():
         if not current_user.is_admin:
-            flash('Access denied. Admin privileges required.', 'error')
-            return redirect(url_for('generate_code'))
+            return redirect(url_for('home'))
         return render_template('admin.html')
 
     @app.route('/verify', methods=['GET', 'POST'])
