@@ -12,6 +12,7 @@ from .validation import validate_instagram_url, validate_caption, sanitize_input
 from flask_limiter import Limiter
 from .monitoring import monitor_performance, capture_security_event, track_user_action
 import sentry_sdk
+from flask import current_app
 
 # Load environment variables
 load_dotenv()
@@ -324,7 +325,7 @@ def init_app(app, limiter):
                 flash('Autograph generated successfully!', 'success')
                 return redirect(url_for('view_code', id=autograph.id))
             except Exception as e:
-                logger.error(f"Error generating autograph: {e}")
+                current_app.logger.error(f"Error generating autograph: {e}")
                 db.session.rollback()
                 flash('An error occurred while generating the autograph.', 'error')
                 return render_template('generate.html')
@@ -480,12 +481,12 @@ def init_app(app, limiter):
                     }
                     result.append(code_data)
                 except Exception as e:
-                    logger.error(f"Error processing code {code.id}: {str(e)}")
+                    current_app.logger.error(f"Error processing code {code.id}: {str(e)}")
                     continue
             
             return jsonify(result)
         except Exception as e:
-            logger.error(f"Error in list_invite_codes: {str(e)}")
+            current_app.logger.error(f"Error in list_invite_codes: {str(e)}")
             db.session.rollback()
             return jsonify({'error': f'Failed to load invite codes. Error: {str(e)}'}), 500
 

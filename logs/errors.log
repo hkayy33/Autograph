@@ -1,0 +1,82 @@
+[2025-04-24 18:18:54,244] ERROR in app: Unhandled exception: (psycopg2.errors.InsufficientPrivilege) permission denied for table invite_codes
+
+[SQL: SELECT invite_codes.id AS invite_codes_id, invite_codes.code AS invite_codes_code, invite_codes.instagram_handle AS invite_codes_instagram_handle, invite_codes.is_used AS invite_codes_is_used, invite_codes.created_at AS invite_codes_created_at, invite_codes.used_at AS invite_codes_used_at 
+FROM invite_codes 
+WHERE invite_codes.instagram_handle = %(instagram_handle_1)s AND invite_codes.code = %(code_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'instagram_handle_1': 'admin', 'code_1': 'pass', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Path: /login
+Method: POST
+IP: 127.0.0.1
+User Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15
+User: Anonymous
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.InsufficientPrivilege: permission denied for table invite_codes
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/flask_limiter/extension.py", line 1298, in __inner
+    return cast(R, flask.current_app.ensure_sync(obj)(*a, **k))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/routes.py", line 128, in login
+    user = InviteCode.authenticate(instagram_handle, code)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/WebApp/models.py", line 60, in authenticate
+    ).first()
+      ^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2759, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2858, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+           ^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/hassan/Autograph/venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 945, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.InsufficientPrivilege) permission denied for table invite_codes
+
+[SQL: SELECT invite_codes.id AS invite_codes_id, invite_codes.code AS invite_codes_code, invite_codes.instagram_handle AS invite_codes_instagram_handle, invite_codes.is_used AS invite_codes_is_used, invite_codes.created_at AS invite_codes_created_at, invite_codes.used_at AS invite_codes_used_at 
+FROM invite_codes 
+WHERE invite_codes.instagram_handle = %(instagram_handle_1)s AND invite_codes.code = %(code_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'instagram_handle_1': 'admin', 'code_1': 'pass', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)

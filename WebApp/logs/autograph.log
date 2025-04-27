@@ -104,3 +104,8 @@
 {"asctime": "2025-04-21 18:47:13,314", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
 {"asctime": "2025-04-21 18:49:57,515", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
 {"asctime": "2025-04-21 18:49:57,515", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-25 15:10:13,841", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-25 15:10:31,619", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-25 15:10:31,619", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
+{"asctime": "2025-04-25 15:10:35,356", "levelname": "INFO", "name": "app", "message": "Database tables created successfully"}
+{"asctime": "2025-04-25 15:10:35,356", "levelname": "INFO", "name": "app", "message": "SSL enabled with cert: certs/cert.pem and key: certs/key.pem"}
