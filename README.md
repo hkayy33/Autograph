@@ -102,11 +102,6 @@ The application uses self-signed certificates located in:
 
 ## 🔧 Development
 
-### Debug Mode
-- Debug mode is enabled with PIN protection
-- Debug PIN: 135-244-311 (for development only)
-- Should be disabled in production
-
 ### Common Issues
 1. **Port Conflicts**: 
    - Default port is 5002
@@ -131,20 +126,4 @@ The application uses self-signed certificates located in:
 - [ ] Add API documentation
 - [ ] Production-grade SSL certificates
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-[Your License Here]
-
-## 📧 Contact
-
-Your Name - [your-email@example.com]
-
-Project Link: [https://github.com/yourusername/Autograph] 
